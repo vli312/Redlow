@@ -1,0 +1,166 @@
+html, body {
+  background-color: #e5e5e6;
+  color: #333333;
+  font-family: Helvetica, Arial, serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* header styles */
+div#title-box img {
+  max-width: 9em;
+}
+
+div#logged-in {
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2%;
+}
+
+div#logged-in img {
+  display: inline;
+  float: left;
+  max-width: 5em;
+  height: 3em;
+  margin: 0 1em 0 0;
+}
+
+div#logged-in span{
+  border: .1em solid #c5bfbf;
+}
+
+div#logged-in button{
+  display: block;
+  margin-top: 1em;
+}
+
+nav#navbar {
+  clear: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 3em;
+  color: #dddddd;
+  background-color: #9e0919;
+  width: 100%;
+}
+
+nav#navbar a {
+  padding: .7em 0 .7em 0;
+  text-align: center;
+  width: 20%;
+  color: white;
+  text-decoration: none;
+}
+
+form#search {
+  display: inline-flex;
+}
+
+nav#navbar input {
+  padding: .7em;
+}
+
+nav#navbar a:hover {
+  background-color: #999999;
+}
+
+nav#navbar a.selected {
+  background-color: dimgrey;
+}
+
+/* content styles*/
+div#content {
+  clear: left;
+  background-color: #ffffff;
+  overflow: hidden;
+  height: 38em;
+}
+
+div#content h2 {
+  text-align: center;
+  font-size: 2em;
+}
+
+div#content p {
+  margin-left: 7%;
+  margin-right: 7%;
+  font-size: 1.5em;
+}
+
+/* footer styles styles */
+div#footer {
+  position: static;
+  margin-top: 1em;
+  color: #ffffff;
+  border-top: .1em solid #ddd;
+}
+
+div#copyright {
+  margin-left: 12.5%;
+  display: block;
+  float: left;
+  width: 50%;
+  color: black;
+  font-size: small;
+}
+
+/* mobile styles */
+@media (max-width: 768px) {
+  /* header styles*/
+  div#header {
+    display: flex;
+    flex-direction: column;
+  }
+
+  div#title-box h2 {
+    font-size: large;
+    display: block;
+  }
+
+  nav#navbar a {
+    font-size: small;
+  }
+
+  /* content styles*/
+
+  /* footer styles */
+  div#footer {
+    display: flex;
+    flex-direction: column;
+  }
+  div#footer-nav  {
+    margin-left: 12.5%;
+    margin-bottom: 10%
+  }
+}
+
+/* browser styles */
+@media all and (min-width: 769px) {
+  /* header styles */
+  div#title-box {
+    position: static;
+    float: left;
+    width: 65%;
+    margin-left: 12.5%;
+    margin-bottom: 2em;
+  }
+
+  div#title-box img {
+    display: inline;
+    float: left;
+    margin: 2em 1em 0 0;
+  }
+
+  div#title-box h2 {
+    font-size: large;
+    display: block;
+  }
+
+  /* content styles*/
+
+  /* footer styles */
+  div#footer-nav  {
+    margin-right: 12.5%;
+  }
+}
