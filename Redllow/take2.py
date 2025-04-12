@@ -1,11 +1,15 @@
-from gmplot import GoogleMapPlotter
+import folium
 
-# Center coordinates for the DMV region
-dmv_center_lat = 38.9072
-dmv_center_lng = -77.0369
+# Define the center of the DMV area (e.g., Washington, D.C.)
+dmv_center = [38.8951, -77.0364]  # Latitude, Longitude
 
-# Create the map
-gmap = GoogleMapPlotter(dmv_center_lat, dmv_center_lng, zoom=9, apikey="AIzaSyBO6zsn6om2Xnrjwe_Bw_9Nl3WtUbSn5ws")
+# Create a Folium map object
+dmv_map = folium.Map(location=dmv_center, zoom_start=9)  # Adjust zoom_start as needed
 
-# Save the map to an HTML file
-gmap.draw("dmv_region_map_gmplot.html")
+# Add a marker for Washington, D.C.
+folium.Marker(dmv_center, popup="Washington, D.C.").add_to(dmv_map)
+
+#Save the map to an html file.
+dmv_map.save("dmv_map.html")
+
+print("Map saved to dmv_map.html")
