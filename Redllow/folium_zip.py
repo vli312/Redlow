@@ -1,5 +1,5 @@
 import folium
-from folium.plugins import FastMarkerCluster
+from folium.plugins import FastMarkerCluster, MarkerCluster
 import pandas as pd
 
 
@@ -17,8 +17,8 @@ df_dmv_zip = df_zillow_zip[['RegionName']].copy()
 df_dmv_zip = pd.merge(left=df_dmv_zip, right=df_georef_zip, how='left', left_on='RegionName', right_on='Zip Code')
 
 # Plotting the zip codes on the Folium map
-#latitudes = list(df_dmv_zip['Latitude'])
-#longitudes = list(df_dmv_zip['Longitude'])
+latitudes = list(df_dmv_zip['Latitude'])
+longitudes = list(df_dmv_zip['Longitude'])
 zip_popups = list(df_dmv_zip['Zip Code'].astype(str))
 
 # Define the center of the DMV area (e.g., Washington, D.C.)
@@ -29,11 +29,26 @@ dmv_map = folium.Map(location=dmv_center, zoom_start=9)  # Adjust zoom_start as 
 
 # Add a marker each for all zipcodes (Washington, D.C.)
 #folium.Marker(dmv_center, popup="Washington, D.C.").add_to(dmv_map)
-#FastMarkerCluster(data=list(zip(latitudes, longitudes)), popups=zip_popups).add_to(dmv_map)
+#FastMarkerCluster(data=list(zip(latitudes, longitudes)), popups=zip_popups).add_to(dmv_map) # 1st Method: Cluster but no popup
+#for i in range(len(zip_popups)): # 2nd Method: Popup but no clister
+#    folium.Marker([df_dmv_zip['Latitude'].iloc[i], df_dmv_zip['Longitude'].iloc[i]], popup=zip_popups[i]).add_to(dmv_map)
+marker_cluster = MarkerCluster( # Method 3: Cluster + Popup
+    name='Zip Codes Cluster',
+    overlay=True,
+    control=False,
+    icon_create_function=None
+)
 for i in range(len(zip_popups)):
-    folium.Marker([df_dmv_zip['Latitude'].iloc[i], df_dmv_zip['Longitude'].iloc[i]], popup=zip_popups[i]).add_to(dmv_map)
+    location = latitudes[i], longitudes[i]
+    marker = folium.Marker(location=location)
+    popup = zip_popups[i]
+    folium.Popup(popup).add_to(marker)
+    marker_cluster.add_child(marker)
+marker_cluster.add_to(dmv_map)
+folium.LayerControl().add_to(dmv_map);
+
 
 #Save the map to an html file.
 dmv_map.save("dmv_map_zip.html")
 
-print("Map saved to dmv_map.html")
+print("Map saved to dmv_map_zip.html")
