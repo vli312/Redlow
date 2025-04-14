@@ -82,8 +82,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'redllow_db',
-        'USER': 'redllow_user',
-        'PASSWORD': 'Dengming1972!',
+        #'USER': 'redllow_user',
+        #'PASSWORD': 'Dengming1972!',
+        'USER': 'postgres',
+        'PASSWORD': 'password',
         'HOST': 'localhost',
         'PORT': '5432',
     }
