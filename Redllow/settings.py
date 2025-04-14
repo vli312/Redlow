@@ -81,9 +81,11 @@ WSGI_APPLICATION = 'Redllow.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        "NAME": "cs5614db",
-        "USER": "postgres",
-        "PASSWORD": "Bhalloo1473@",
+        'NAME': 'redllow_db',
+        #'USER': 'redllow_user',
+        #'PASSWORD': 'Dengming1972!',
+        'USER': 'postgres',
+        'PASSWORD': 'password',
         'HOST': 'localhost',
         'PORT': '5432',
     }
