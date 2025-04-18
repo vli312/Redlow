@@ -45,8 +45,6 @@ class Prices(models.Model):
     region = models.ForeignKey(Region, on_delete=models.CASCADE)
     date = models.DateField()
     home_value = models.DecimalField(max_digits=12, decimal_places=2)
-    latitude = models.FloatField()
-    longitude = models.FloatField()
 
     def __str__(self):
         return f"{self.region.region_name} on {self.date}"

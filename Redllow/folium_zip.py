@@ -2,8 +2,6 @@ import folium
 from folium.plugins import FastMarkerCluster, MarkerCluster
 import pandas as pd
 
-
-
 # Getting the Georeference dataset for zipcodes in US
 df_georef_zip = pd.read_csv(r'./Base_Data/georef-united-states-of-america-zc-point.csv', sep=';')
 df_georef_zip = df_georef_zip[['Zip Code', 'Geo Point']]

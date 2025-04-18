@@ -1,64 +1,94 @@
 import pandas as pd
 from django.core.management.base import BaseCommand
-from page.models import Region, Prices, MapLocation
+from page.models import Region, Prices, MapLocation, ZipCode, Neighbourhood
 import googlemaps
 import time
+import os
+from django.conf import settings
 
 # Initialize Google Maps client
-gmaps = googlemaps.Client(key='AIzaSyBO6zsn6om2Xnrjwe_Bw_9Nl3WtUbSn5ws')
+gmaps = googlemaps.Client(key='AIzaSyA2xFYbh29CbigMzRl-gvHX346UAm-vS0o')
 
 class Command(BaseCommand):
-    help = 'Populates the database with region and price data from the Zillow dataset'
+    help = 'Import Zillow data from Excel and populate Region, Prices, and MapLocation tables.'
 
     def handle(self, *args, **kwargs):
-        # Load the Excel file
-        file_path = 'Base_Data/zillow_base_data.xlsx'  # Update to the correct path
-        excel_data = pd.read_excel(file_path, sheet_name='ZIP')
 
-        # Extract ZIP data
-        zip_data = excel_data[['RegionID', 'SizeRank', 'RegionName', 'RegionType', 'StateName', 'CountyName', 'Metro']]
+        self.stdout.write(self.style.WARNING("Clearing old Regions, Prices, ZipCodes, and Neighbourhoods..."))
 
-        # Extract date columns (this dynamically selects all columns with dates)
-        date_columns = [col for col in excel_data.columns if isinstance(col, pd.Timestamp)]
+        Prices.objects.all().delete()
+        ZipCode.objects.all().delete()
+        Neighbourhood.objects.all().delete()
+        Region.objects.all().delete()
+        MapLocation.objects.all().delete()
 
-        # Iterate over rows to extract region data and insert it
-        for _, row in zip_data.iterrows():
-            region_name = row['RegionName']
-            region_id = row['RegionID']
-            state = row['StateName']
-            metro = row['Metro']
-            county = row['CountyName']
-            size_rank = row['SizeRank']
+        data_path = os.path.join(settings.BASE_DIR, 'Base_Data', 'zillow_base_data.xlsx')
 
-            # Create Region object
-            region, created = Region.objects.get_or_create(
-                region_id=region_id,
-                region_name=region_name,
-                state=state,
-                metro=metro,
-                county=county,
-                size_rank=size_rank,
-                region_type='zip'  # or 'neighbourhood', depending on your data
-            )
+        # Sheets to process
+        sheet_map = {
+            'ZIP': 'zip',
+            'Neighbourhood': 'neighbourhood',
+        }
 
-            # Fetch latitude and longitude using Google Maps API
-            location = self.create_map_location(region_name, county, metro)
-            if location:
-                region.location = location
-                region.save()
+        for sheet_name, region_type in sheet_map.items():
+            df = pd.read_excel(data_path, sheet_name=sheet_name)
+            metadata_columns = [
+                'RegionID', 'SizeRank', 'RegionName', 'RegionType',
+                'StateName', 'State', 'City', 'Metro', 'CountyName'
+            ]
+            date_columns = df.columns.difference(metadata_columns)
 
-            # Insert Prices data dynamically for each date column
-            for date in date_columns:
-                home_value = row[date]  # Price for the region on the specific date
-                Prices.objects.create(
-                    region=region,
-                    date=date,
-                    home_value=home_value,
-                    latitude=location.latitude,  # Store latitude
-                    longitude=location.longitude  # Store longitude
+            for index, row in df.iterrows():
+                region_name = row['RegionName']
+                state = row['State']
+                metro = row['Metro']
+                county = row['CountyName']
+                size_rank = row['SizeRank']
+
+                location = self.create_map_location(region_name, county, metro)
+
+                region, _ = Region.objects.get_or_create(
+                    region_name=region_name,
+                    metro=metro,
+                    county=county,
+                    state=state,
+                    region_type=region_type,
+                    defaults={
+                        'size_rank': size_rank,
+                        'location': location
+                    }
                 )
 
-        self.stdout.write(self.style.SUCCESS('Successfully populated the database with region and price data'))
+                # Create ZIP or Neighbourhood model linked to Region
+                if region_type == 'zip':
+                    ZipCode.objects.get_or_create(
+                        region=region,
+                        defaults={'zip_code': region_name, 'location': location}
+                    )
+                elif region_type == 'neighbourhood':
+                    Neighbourhood.objects.get_or_create(
+                        region=region,
+                        defaults={'location': location}
+                    )
+
+                for date_col in date_columns:
+                    home_value = row[date_col]
+                    if pd.notnull(home_value):
+                        try:
+                            date = pd.to_datetime(str(date_col), errors='coerce').date()
+                            if date:
+                                Prices.objects.get_or_create(
+                                    region=region,
+                                    date=date,
+                                    home_value=home_value
+                                )
+                        except Exception as e:
+                            self.stdout.write(self.style.WARNING(
+                                f"Failed to insert price for {region_name} on {date_col}: {e}"
+                            ))
+
+                self.stdout.write(self.style.SUCCESS(f"[{region_type}] Imported: {region_name}"))
+
 
     def create_map_location(self, region_name, county, metro):
         """
