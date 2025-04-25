@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'page.apps.PageConfig',
     'django.contrib.humanize',
-    'django.contrib.admin'
+    'django.contrib.admin',
+    'users.apps.UsersConfig'
 ]
 
 MIDDLEWARE = [
@@ -80,14 +81,12 @@ WSGI_APPLICATION = 'Redllow.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'redllow_db',
-        #'USER': 'redllow_user',
-        #'PASSWORD': 'Dengming1972!',
-        'USER': 'postgres',
-        'PASSWORD': 'password',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "cs5614db",
+        "USER": "postgres",
+        "PASSWORD": "Bhalloo1473@",
+        "HOST": "127.0.0.1",
+        "PORT": "5432",
     }
 }
 

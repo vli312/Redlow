@@ -10,6 +10,4 @@ urlpatterns = [
     path('privacy/', views.privacyview, name='privacyview'),
     path('faq/', views.faqview, name='faqview'),
     path('contact/', views.contactview, name='contactview'),
-    path('login', views.login, name='login'),
-    path('logout', views.logout, name='logout'),
 ]

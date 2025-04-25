@@ -1,0 +1,27 @@
+{% extends 'page/base.html' %}
+{% load static %}
+{% block page-title %}Edit Profile for {{ user.username }}{% endblock %}
+{% block content %}
+    <h2 class='section-title'>Edit Profile for {{ user.username }}</h2>
+    <form id="edit-profile" action="{% url 'users:editprofile' username=user.username %}" method="POST">
+        {% csrf_token %}
+        <dl id="profile-list">
+            <dt class="itemDes"><strong>Username</strong></dt>
+            <dd class="item"><input type='text' name="username" value="{{ user.username }}"></dd>
+            <dt class="itemDes"><strong>Password</strong></dt>
+            <dd class="item"><input type='text' name="password" value="{{ user.password }}"></dd>
+            <dt class="itemDes"><strong>First Name</strong></dt>
+            <dd class="item"><input type='text' name="fname" value="{{ user.detail.fname }}"></dd>
+            <dt class="itemDes"><strong>Last Name</strong></dt>
+            <dd class="item"><input type='text' name="lname" value="{{ user.detail.lname }}"></dd>
+            <dt class="itemDes"><strong>Email Address</strong></dt>
+            <dd class="item"><input type='text' name="email" value="{{ user.email }}"></dd>
+            <dt class="itemDes"><strong>Role</strong></dt>
+            <dd class="item"><input type='text' name="role" value="{{ user.detail.role }}"></dd>
+        </dl>
+        <div id="editbuttons">
+            <a href="{% url 'users:profile' user.username %}" class="editprofile">Cancel</a>
+            <button id="editsave">Save</button>
+        </div>
+    </form>
+{% endblock %}

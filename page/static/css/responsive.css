@@ -70,6 +70,77 @@ nav#navbar a.selected {
 }
 
 /* content styles*/
+ul.messages {
+    font-weight: bold;
+    padding: 1em;
+    margin: 0;
+    list-style: none;
+}
+
+ul.messages li.success {
+    background-color: lightgreen;
+    padding: 1em;
+    margin: 0.25em;
+}
+
+ul.messages li.info {
+    background-color: dodgerblue;
+    padding: 1em;
+    margin: 0.25em;
+}
+
+ul.messages li.warning {
+    background-color: #ff1b1b;
+    padding: 1em;
+    margin: 0.25em;
+}
+
+#register-users {
+    margin: 0 8em 8em 8em;
+    display: flex;
+    flex-direction: column;
+}
+
+div.regdiv {
+    margin: .5em 0 .5em 0;
+}
+
+div.regdiv input {
+    margin-left: 1em;
+}
+
+#register-users .regdiv label {
+  width: 2em;
+  text-align: right;
+  margin-right: 10px;
+}
+
+#reg-submit {
+    width: 20%;
+}
+
+dl#profile-list {
+    margin: 0 8em 0 8em;
+}
+
+dt.itemDes {
+    margin: 2em 0 .5em 0;
+}
+
+dd.item {
+    margin: 0 0 2em 0;
+}
+
+a.editprofile {
+    margin-bottom: 10em;
+    margin-right: 15em;
+    text-decoration: none;
+    border: .15em solid #100b0b;
+    padding: .3em .5em .3em .5em;
+    float: right;
+    color: #7e7676;
+}
+
 div#content {
   clear: left;
   background-color: #ffffff;
