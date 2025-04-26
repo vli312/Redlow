@@ -58,8 +58,3 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review by {self.user.username} for {self.region.region_name}"
-
-
-# hard coded passwords
-regular_user = {"username": "James", "pw": "nicepwd4$"}
-admin_user = {"username": "Victor", "pw": "adminpwd4$"}

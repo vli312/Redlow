@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'page.apps.PageConfig',
     'django.contrib.humanize',
     'django.contrib.admin',
-    'users.apps.UsersConfig'
+    'users.apps.UsersConfig',
+    'comments.apps.CommentsConfig'
 ]
 
 MIDDLEWARE = [

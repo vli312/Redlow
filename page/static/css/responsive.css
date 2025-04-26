@@ -14,6 +14,7 @@ div#title-box img {
 div#logged-in {
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 5em;
   margin-top: 2%;
 }
 
@@ -96,7 +97,7 @@ ul.messages li.warning {
 }
 
 #register-users {
-    margin: 0 8em 8em 8em;
+    margin: 1em 15em 8em 15em;
     display: flex;
     flex-direction: column;
 }
@@ -131,6 +132,57 @@ dd.item {
     margin: 0 0 2em 0;
 }
 
+div#comments {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+div#comment-box {
+    border: .1em solid #070101 !important;
+    text-decoration: none;
+    text-align: left;
+    margin: 0 8em 0 8em;
+}
+
+ul#comments-list {
+    padding: 0 0 0 .8em;
+    width: 100%;
+}
+
+ul#comments-list li {
+    list-style-type: none;
+    text-align: left;
+}
+
+ul#comments-list li img {
+    display: inline;
+    float: left;
+    max-width: 1.5em;
+    margin-right: .7em;
+}
+
+ul#comments-list li p {
+    text-align: left;
+    font-size: 1em;
+}
+.edit-comment {
+    width: 4em;
+}
+
+#comment-bottom {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+}
+
+#comment-bottom input[type="text"] {
+    flex: 1;
+    margin-right: 10px;
+    box-sizing: border-box;
+}
+
 a.editprofile {
     margin-bottom: 10em;
     margin-right: 15em;
@@ -145,7 +197,6 @@ div#content {
   clear: left;
   background-color: #ffffff;
   overflow: hidden;
-  height: 38em;
 }
 
 div#content h2 {

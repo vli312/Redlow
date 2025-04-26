@@ -1,0 +1,40 @@
+{% extends 'page/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block page-title %}Review{% endblock %}
+{% block reviewSelected %}selected{% endblock %}
+
+{% block content %}
+    <div id="comments">
+        <h2 class='section-title'>Review</h2>
+        <div id='comment-box'>
+            <ul id='comments-list'>
+                {% for comment in comments %}
+                    <li>
+                        <img src='{% static 'img/personIcon.png' %}' alt='PersonIcon'>
+                        <p><strong><a href="{% url 'users:profile' comment.user.username %}">{{ comment.user.username }}</a></strong> - {{ comment.created | naturalday}}:</p>
+                        <p>{{ comment.text }}</p>
+                        {% if comment.user.username == request.session.username or request.session.role == 'admin'%}
+                            <form method="POST">
+                                <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                                <input type="submit" name="submit" value="Delete" id="edit-comment">
+                                {% csrf_token %}
+                            </form>
+                        {% endif %}
+                    </li>
+                {% empty %}
+                    <li>No comments yet</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% if request.session.username %}
+            <form id="register-users" method="POST">
+                <div id='comment-bottom'>
+                    <label for="register-lname"></label><input name="text" type="text">
+                    <input type="submit" name="submit" value="Add">
+                </div>
+                {% csrf_token %}
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}
