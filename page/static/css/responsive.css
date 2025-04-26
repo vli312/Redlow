@@ -193,6 +193,13 @@ a.editprofile {
     color: #7e7676;
 }
 
+div#home {
+  clear: left;
+  background-color: #ffffff;
+  overflow: hidden;
+  height: 38em;
+}
+
 div#content {
   clear: left;
   background-color: #ffffff;
