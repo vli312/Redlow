@@ -1,0 +1,140 @@
+{% extends 'page/base.html' %}
+{% load static %}
+{% block page-title %}Product{% endblock %}
+
+{% block scripts %}
+
+{% endblock scripts %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folium Map, Chart, and Comments</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto 1fr 1fr;
+            flex-grow: 1;
+        }
+        #searchContainer {
+            grid-column: 1 / 2;
+            grid-row: 1 / 2;
+            padding: 10px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+        }
+        #searchBar {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+        }
+        #mapContainer {
+            grid-column: 1 / 2;
+            grid-row: 2 / 4;
+            padding: 0;
+            overflow: hidden;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        #lineChartContainer {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+            padding: 10px;
+            background: #f8f9fa;
+        }
+        #commentsContainer {
+            grid-column: 2 / 3;
+            grid-row: 3 / 4;
+            padding: 10px;
+            background: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+        }
+        #commentInput {
+            flex: 1;
+            padding: 8px;
+            font-size: 16px;
+            resize: none;
+            margin-bottom: 10px;
+        }
+        #submitComment {
+            padding: 8px 12px;
+            font-size: 16px;
+        }
+        footer {
+            height: 100px;
+            background: #e0e0e0;
+            text-align: center;
+            line-height: 50px;
+            font-size: 14px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.min.css">
+</head>
+<body>
+    <div class="main">
+        <div id="searchContainer">
+            <input type="text" id="searchBar" placeholder="Search...">
+        </div>
+        <div id="mapContainer">
+            <!-- Embed a Folium map saved as HTML -->
+            <iframe src="/zipcodemap.html"></iframe>
+        </div>
+        <div id="lineChartContainer">
+            <canvas id="lineChart"></canvas>
+        </div>
+        <div id="commentsContainer">
+            <textarea id="commentInput" placeholder="Write your comment..."></textarea>
+            <button id="submitComment">Submit</button>
+        </div>
+    </div>
+    <footer>
+        Footnote section (empty space)
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Initialize the line chart
+        const lineCtx = document.getElementById('lineChart').getContext('2d');
+        const lineChart = new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+                datasets: [{
+                    label: 'Example Data',
+                    data: [10, 20, 15, 30, 25, 40, 35],
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Handle comment submission (basic example)
+        document.getElementById('submitComment').addEventListener('click', () => {
+            const comment = document.getElementById('commentInput').value;
+            if (comment.trim() !== '') {
+                alert('Comment submitted: ' + comment);
+                document.getElementById('commentInput').value = '';
+            }
+        });
+    </script>
+</body>
+{% endblock %}

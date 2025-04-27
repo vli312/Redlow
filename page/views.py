@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import regular_user, admin_user
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 # Create your views here.
 def homeview(request):
@@ -51,3 +52,13 @@ def logout(request):
     del request.session['username']
     del request.session['role']
     return redirect('page:homeview')
+
+@xframe_options_exempt
+def zipcodemapview(request):
+    return render(request,
+                  'page/page_story/folium_map_zipcode.html')
+
+@xframe_options_exempt
+def neighbourhoodmapview(request):
+    return render(request,
+                  'page/page_story/folium_map_neighbourhood.html')

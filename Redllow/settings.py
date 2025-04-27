@@ -40,8 +40,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'page.apps.PageConfig',
     'django.contrib.humanize',
-    'django.contrib.admin'
+    'django.contrib.admin',
+
+    'crispy_forms',
+
+    'rest_framework',
+    'region_api',
 ]
+
+CRISPY_TEMPLATE_PACK = 'uni_form'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
