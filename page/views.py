@@ -1,7 +1,8 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 
-from comments.models import Comment
+from page.models import Review
+from page.models import Region
 from users.models import User
 
 # Create your views here.
@@ -14,31 +15,51 @@ def aboutview(request):
                   'page/page_story/about.html')
 
 def reviewview(request):
-    comments = Comment.objects.order_by('-created')
+    reviews = Review.objects.select_related('user', 'region').order_by('-created_at')
+    regions = Region.objects.all().order_by('region_name')
+
     if request.method == 'POST':
-        if 'text' in request.POST:
-            userFK = User.objects.get(username=request.session.get('username'))
-            comment_text = request.POST.get('text')
-            new_comment = Comment.objects.create(
-                user=userFK,
-                zipCode=22201,
-                text=comment_text,
-            )
-            new_comment.save()
-            messages.add_message(request, messages.SUCCESS, 'Comment added')
-            return redirect('page:reviewview')
-        elif 'Delete' in request.POST.get('submit'):
-            comment_id = request.POST.get('comment_id')
-            if comment_id:
-                comment = get_object_or_404(Comment, pk=comment_id)
-                comment.delete()
-                userFK = User.objects.get(username=request.session.get('username'))
-                messages.add_message(request, messages.WARNING, f'You successfully deleted a comment')
+        if request.POST.get('submit') == 'Add':
+            try:
+                user = User.objects.get(username=request.session.get('username'))
+                region_id = int(request.POST.get('region_id'))
+                region = Region.objects.get(region_id=region_id)
+                content = request.POST.get('text', '').strip()
+                rating = int(request.POST.get('rating', 1))
+                num_bedrooms = int(request.POST.get('num_bedrooms', 0))
+                num_bathrooms = int(request.POST.get('num_bathrooms', 0))
+                price_paid = float(request.POST.get('price_paid', 0))
+                ownership_status = request.POST.get('ownership_status')
+                zip_code = request.POST.get('zip_code', '')
+
+                Review.objects.create(
+                    user=user,
+                    region=region,
+                    content=content,
+                    rating=rating,
+                    num_bedrooms=num_bedrooms,
+                    num_bathrooms=num_bathrooms,
+                    price_paid=price_paid,
+                    ownership_status=ownership_status,
+                    zip_code=zip_code
+                )
+
+                messages.success(request, "Review added successfully!")
                 return redirect('page:reviewview')
-            else:
-                print("Error: comment_id is None")
-    return render(request,
-                  'page/page_story/review.html',{'comments':comments})
+            except Exception as e:
+                messages.error(request, f"Failed to add review: {e}")
+
+        elif request.POST.get('submit') == 'Delete':
+            review_id = request.POST.get('review_id')
+            review = get_object_or_404(Review, pk=review_id)
+            review.delete()
+            messages.warning(request, "Review deleted.")
+            return redirect('page:reviewview')
+
+    return render(request, 'page/page_story/review.html', {
+        'reviews': reviews,
+        'regions': regions
+    })
 
 def productview(request):
     return render(request,

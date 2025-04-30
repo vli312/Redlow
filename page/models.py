@@ -49,12 +49,27 @@ class Prices(models.Model):
     def __str__(self):
         return f"{self.region.region_name} on {self.date}"
 
+
 class Review(models.Model):
+    OWNERSHIP_CHOICES = [
+        ('rent', 'Rent'),
+        ('own', 'Own'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    region = models.ForeignKey(Region, on_delete=models.CASCADE)
+    region = models.ForeignKey('Region', on_delete=models.CASCADE)
+
+    # Original fields
     content = models.TextField()
     rating = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # New fields
+    zip_code = models.CharField(max_length=10, null=True, blank=True)
+    num_bathrooms = models.IntegerField(default=0)
+    num_bedrooms = models.IntegerField(default=1)
+    price_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    ownership_status = models.CharField(max_length=4, choices=OWNERSHIP_CHOICES, default='rent')
 
     def __str__(self):
         return f"Review by {self.user.username} for {self.region.region_name}"
