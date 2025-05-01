@@ -14,6 +14,7 @@ div#title-box img {
 div#logged-in {
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 5em;
   margin-top: 2%;
 }
 
@@ -70,11 +71,139 @@ nav#navbar a.selected {
 }
 
 /* content styles*/
-div#content {
+ul.messages {
+    font-weight: bold;
+    padding: 1em;
+    margin: 0;
+    list-style: none;
+}
+
+ul.messages li.success {
+    background-color: lightgreen;
+    padding: 1em;
+    margin: 0.25em;
+}
+
+ul.messages li.info {
+    background-color: dodgerblue;
+    padding: 1em;
+    margin: 0.25em;
+}
+
+ul.messages li.warning {
+    background-color: #ff1b1b;
+    padding: 1em;
+    margin: 0.25em;
+}
+
+#register-users {
+    margin: 1em 15em 8em 15em;
+    display: flex;
+    flex-direction: column;
+}
+
+div.regdiv {
+    margin: .5em 0 .5em 0;
+}
+
+div.regdiv input {
+    margin-left: 1em;
+}
+
+#register-users .regdiv label {
+  width: 2em;
+  text-align: right;
+  margin-right: 10px;
+}
+
+#reg-submit {
+    width: 20%;
+}
+
+dl#profile-list {
+    margin: 0 8em 0 8em;
+}
+
+dt.itemDes {
+    margin: 2em 0 .5em 0;
+}
+
+dd.item {
+    margin: 0 0 2em 0;
+}
+
+div#comments {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+div#comment-box {
+    border: .1em solid #070101 !important;
+    text-decoration: none;
+    text-align: left;
+    margin: 0 8em 0 8em;
+}
+
+ul#comments-list {
+    padding: 0 0 0 .8em;
+    width: 100%;
+}
+
+ul#comments-list li {
+    list-style-type: none;
+    text-align: left;
+}
+
+ul#comments-list li img {
+    display: inline;
+    float: left;
+    max-width: 1.5em;
+    margin-right: .7em;
+}
+
+ul#comments-list li p {
+    text-align: left;
+    font-size: 1em;
+}
+.edit-comment {
+    width: 4em;
+}
+
+#comment-bottom {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+}
+
+#comment-bottom input[type="text"] {
+    flex: 1;
+    margin-right: 10px;
+    box-sizing: border-box;
+}
+
+a.editprofile {
+    margin-bottom: 10em;
+    margin-right: 15em;
+    text-decoration: none;
+    border: .15em solid #100b0b;
+    padding: .3em .5em .3em .5em;
+    float: right;
+    color: #7e7676;
+}
+
+div#home {
   clear: left;
   background-color: #ffffff;
   overflow: hidden;
   height: 38em;
+}
+
+div#content {
+  clear: left;
+  background-color: #ffffff;
+  overflow: hidden;
 }
 
 div#content h2 {

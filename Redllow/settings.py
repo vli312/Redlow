@@ -41,14 +41,11 @@ INSTALLED_APPS = [
     'page.apps.PageConfig',
     'django.contrib.humanize',
     'django.contrib.admin',
-
-    'crispy_forms',
-
+    'users.apps.UsersConfig',
+    'comments.apps.CommentsConfig',
     'rest_framework',
     'region_api',
 ]
-
-CRISPY_TEMPLATE_PACK = 'uni_form'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -87,14 +84,14 @@ WSGI_APPLICATION = 'Redllow.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'redllow_db',
-        #'USER': 'redllow_user',
-        #'PASSWORD': 'Dengming1972!',
-        'USER': 'postgres',
-        'PASSWORD': 'password',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        "ENGINE": "django.db.backends.postgresql",
+        #"NAME": "cs5614db",
+        "NAME": "redllow_db",
+        "USER": "postgres",
+        #"PASSWORD": "Bhalloo1473@",
+        "PASSWORD": "password",
+        "HOST": "127.0.0.1",
+        "PORT": "5432",
     }
 }
 
@@ -139,3 +136,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# SETTING X-FRAME-OPTIONS TO EMBED FOLIUM MAP FOR DISPLAY
+#X_FRAME_OPTIONS = 'SAMEORIGIN'

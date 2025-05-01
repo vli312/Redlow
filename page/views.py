@@ -1,6 +1,10 @@
-from django.shortcuts import render, redirect
-from .models import regular_user, admin_user
+from django.contrib import messages
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.clickjacking import xframe_options_exempt
+
+from page.models import Review
+from page.models import Region
+from users.models import User
 
 # Create your views here.
 def homeview(request):
@@ -11,9 +15,52 @@ def aboutview(request):
     return render(request,
                   'page/page_story/about.html')
 
-def designview(request):
-    return render(request,
-                  'page/page_story/design.html')
+def reviewview(request):
+    reviews = Review.objects.select_related('user', 'region').order_by('-created_at')
+    regions = Region.objects.all().order_by('region_name')
+
+    if request.method == 'POST':
+        if request.POST.get('submit') == 'Add':
+            try:
+                user = User.objects.get(username=request.session.get('username'))
+                region_id = int(request.POST.get('region_id'))
+                region = Region.objects.get(region_id=region_id)
+                content = request.POST.get('text', '').strip()
+                rating = int(request.POST.get('rating', 1))
+                num_bedrooms = int(request.POST.get('num_bedrooms', 0))
+                num_bathrooms = int(request.POST.get('num_bathrooms', 0))
+                price_paid = float(request.POST.get('price_paid', 0))
+                ownership_status = request.POST.get('ownership_status')
+                zip_code = request.POST.get('zip_code', '')
+
+                Review.objects.create(
+                    user=user,
+                    region=region,
+                    content=content,
+                    rating=rating,
+                    num_bedrooms=num_bedrooms,
+                    num_bathrooms=num_bathrooms,
+                    price_paid=price_paid,
+                    ownership_status=ownership_status,
+                    zip_code=zip_code
+                )
+
+                messages.success(request, "Review added successfully!")
+                return redirect('page:reviewview')
+            except Exception as e:
+                messages.error(request, f"Failed to add review: {e}")
+
+        elif request.POST.get('submit') == 'Delete':
+            review_id = request.POST.get('review_id')
+            review = get_object_or_404(Review, pk=review_id)
+            review.delete()
+            messages.warning(request, "Review deleted.")
+            return redirect('page:reviewview')
+
+    return render(request, 'page/page_story/review.html', {
+        'reviews': reviews,
+        'regions': regions
+    })
 
 def productview(request):
     return render(request,
@@ -31,28 +78,6 @@ def contactview(request):
     return render(request,
                   'page/page_story/contact.html')
 
-def login(request):
-    username = request.POST.get("username")
-    pw = request.POST.get("pw")
-    # authentication with password for regular user
-    if (username == regular_user['username'] and pw == regular_user['pw']):
-        # identification with sessions
-        request.session['username'] = username
-        request.session['role'] = 'regular'
-        return redirect('page:homeview')
-    # admin authentication
-    elif (username == admin_user['username'] and pw == admin_user['pw']):
-        request.session['username'] = username
-        request.session['role'] = 'admin'
-        return redirect('page:homeview')
-    else:
-        return redirect('page:homeview')
-
-def logout(request):
-    del request.session['username']
-    del request.session['role']
-    return redirect('page:homeview')
-
 @xframe_options_exempt
 def zipcodemapview(request):
     return render(request,
@@ -62,3 +87,4 @@ def zipcodemapview(request):
 def neighbourhoodmapview(request):
     return render(request,
                   'page/page_story/folium_map_neighbourhood.html')
+

@@ -1,0 +1,23 @@
+{% extends 'page/base.html' %}
+{% load static %}
+{% block page-title %}Profile for {{ user.username }}{% endblock %}
+{% block content %}
+    <h2 class='section-title'>Profile for {{ user.username }}</h2>
+    <dl id="profile-list">
+        <dt class="itemDes"><strong>Username</strong></dt>
+        <dd class="item">{{ user.username }}</dd>
+        <dt class="itemDes"><strong>First Name</strong></dt>
+        <dd class="item">{{ user.detail.fname }}</dd>
+        <dt class="itemDes"><strong>Last Name</strong></dt>
+        <dd class="item">{{ user.detail.lname }}</dd>
+        <dt class="itemDes"><strong>Email Address</strong></dt>
+        <dd class="item">{{ user.email }}</dd>
+        <dt class="itemDes"><strong>Role</strong></dt>
+        <dd class="item">{{ user.detail.role }}</dd>
+        <dt class="itemDes"><strong>Favorite Protein Source</strong></dt>
+        <dd class="item">{{ user.detail.favproteinsource }}</dd>
+    </dl>
+    {% if request.session.username == user.username or request.session.role == 'admin'%}
+        <a href="{% url 'users:editprofile' user.username %}" class="editprofile">Edit</a>
+    {% endif %}
+{% endblock %}

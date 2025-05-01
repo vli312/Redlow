@@ -17,27 +17,26 @@
             <h2>The New Way To Search For Housing!</h2>
         </div><!-- title-box -->
         {% if request.session.username %}
-        <div id='logged-in'>
-            <img src='{% static 'img/personIcon.png' %}' alt='PersonIcon'> <!-- https://pta.animalia-life.club/icono-de-usuario-verde -->
-            <p>Logged in as: {% if request.session.role == 'admin' %} Admin {% endif %} <strong>{{ request.session.username }}</strong></p>
-            <a href="{% url 'page:logout' %}">Log Out</a>
-        </div><!-- log in-->
-
+            <div id='logged-in'>
+                <img src='{% static 'img/personIcon.png' %}' alt='PersonIcon'>
+                <p>Logged in as: {% if request.session.role == 'admin' %} Admin {% endif %} <a href="{% url "users:profile" request.session.username %}"><strong>{{ request.session.username }}</strong></a></p>
+                    <strong>{{ request.session.username }}</strong></p>
+                <a href="{% url 'users:logout' %}">Log Out</a>
+            </div><!-- log in-->
         {% else %}
-
-        <form id="login-box" action="{% url 'page:login' %}" method ="POST">
-            {% csrf_token %}
-            <input type="text" name="username" placeholder="username">
-            <input type="password" name="pw" placeholder="password">
-            <input type="submit" name="submit" value="Log In"> or <a href="#">Register</a>
-        </form>
+            <form id="login-box" action="{% url 'users:login' %}" method="POST">
+                {% csrf_token %}
+                <input type="text" name="username" placeholder="username">
+                <input type="password" name="pw" placeholder="password">
+                <input type="submit" name="submit" value="Log In"> or <a href="{% url 'users:register' %}">Register</a>
+            </form>
         {% endif %}
 
         <nav id='navbar'>
             <a href='{% url 'page:homeview' %}' class={% block homeSelected %}{% endblock %}>Home</a>
-            <a href="{% url 'page:productview' %}">Product</a>
-            <a href="{% url 'page:designview' %}">Design</a>
-            <a href="{% url 'page:aboutview' %}">About</a>
+            <a href="{% url 'page:productview' %}" class={% block productSelected %}{% endblock %}>Product</a>
+            <a href="{% url 'page:reviewview' %}" class={% block reviewSelected %}{% endblock %}>Review</a>
+            <a href="{% url 'page:aboutview' %}" class={% block aboutSelected %}{% endblock %}>About</a>
             <form action='search-results.html' method='get' id='search'>
                 <input type='text' id='search-bar' name='search-bar' placeholder='Search'>
                 <input type='submit' id='search-submit' value='Go'>
@@ -45,6 +44,13 @@
         </nav><!-- nav bar -->
     </div><!-- header -->
     <div id='content'>
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
        {% block content %}{% endblock %}
     </div><!-- content -->
     <div id='footer'>
