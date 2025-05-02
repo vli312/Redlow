@@ -39,7 +39,12 @@
         .right-half {
             flex: 1;
             display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
             flex-direction: column;
+        }
+        .filterbox {
+            flex: 0 100% 100%;
         }
         .chart-container {
             flex: 1;
@@ -59,19 +64,27 @@
 </head>
 <body>
     <header>
-        <select id="dropdown" style="width: 200px;">
-            <option value="1">Option 1</option>
-            <option value="2">Option 2</option>
-            <option value="3">Option 3</option>
-        </select>
-        <button id="search-btn">Update</button>
     </header>
     <main>
         <div class="left-half">
+            <select id="dropdown" style="width: 200px;">
+                <option value="1">Option 1</option>
+                <option value="2">Option 2</option>
+                <option value="3">Option 3</option>
+            </select>
+            <button id="search-btn">Update</button>
             <!-- Folium map placeholder -->
             <iframe src="zipcodemap.html" id="map-frame"></iframe>
         </div>
         <div class="right-half">
+            <div class="button">
+                <select id="dropdown2" style="width: 200px;">
+                    <option value="1">1 Month</option>
+                    <option value="2">3 Months</option>
+                    <option value="3">6 Months</option>
+                </select>
+                <button id="search-btn2">Forecast</button>
+            </div>
             <div class="chart-container">
                 <canvas id="line-chart"></canvas>
             </div>
@@ -89,14 +102,21 @@
 $(document).ready(function() {
     $('#dropdown').select2();
 });
+$(document).ready(function() {
+    $('#dropdown2').select2();
+});
 
 let lineChart = undefined;
 
 var selectedValue = "22193"; // default
+var selectedValue2 = "1 Month"; // default
 var x_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']; // default
 var line_data = [10, 20, 15, 30, 25, 35]; // default
+var line_forecast_data = [1, 2, 3]
+var line_lower_confint_data = [0, 1, 2]
+var line_upper_confint_data = [2, 3, 4]
 
-async function getDataForLineChart(requestValue){
+async function getDataForLineChart(requestValue, requestValue2){
     //prompt('You selected:', requestValue)
     const api_endpoint_2 = location.protocol + '//' + location.host + '/region_api/plotPopulate_zipcode';
     //prompt(api_endpoint_2)
@@ -129,14 +149,45 @@ async function getDataForLineChart(requestValue){
         // handle errors
         console.error('Error:', error);
         });
+
+    const api_endpoint_5 = location.protocol + '//' + location.host + '/region_api/plotForecast_zipcode';
+
+    const response2 = await fetch(api_endpoint_5, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            // data to update
+            'zipcode' : requestValue.toString(),
+            'forecast' : requestValue2.toString()
+        })
+        })
+        .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+        })
+        .then(data => {
+        // handle the response data
+            x_labels = x_labels.concat(data.months);
+            line_forecast_data = data.forecast;
+            line_lower_confint_data = data.lower_confint;
+            line_upper_confint_data = data.upper_confint;
+        })
+        .catch(error => {
+        // handle errors
+        console.error('Error:', error);
+        });
 }
 
-async function LineChartIt(inputValue){
+async function LineChartIt(inputValue, inputValue2){
     //prompt('You selected:', inputValue)
     if (lineChart) { // Before creation comes destruction.... seriosly...
         lineChart.destroy();
     }
-    await getDataForLineChart(inputValue);
+    await getDataForLineChart(inputValue, inputValue2);
     // Line Chart
     const lineCtx = document.getElementById('line-chart').getContext('2d');
     //const lineChart = new Chart(lineCtx, {
@@ -150,6 +201,27 @@ async function LineChartIt(inputValue){
                 borderColor: 'rgba(75, 192, 192, 1)',
                 borderWidth: 2,
                 fill: false
+            },
+            {
+                label: 'Forecast Values for the selected period',
+                data: line_data.concat(line_forecast_data), //[10, 20, 15, 30, 25, 35],
+                borderColor: 'rgba(250, 170, 23, 0.8)',
+                borderWidth: 2,
+                fill: false
+            },
+            {
+                label: 'Upper CI Limit for the selected period',
+                data: line_data.concat(line_upper_confint_data), //[10, 20, 15, 30, 25, 35],
+                borderColor: 'rgba(235, 86, 216, 0.8)',
+                borderWidth: 2,
+                fill: false
+            },
+            {
+                label: 'Lower CI Limit for the selected period',
+                data: line_data.concat(line_lower_confint_data), //[10, 20, 15, 30, 25, 35],
+                borderColor: 'rgba(235, 86, 216, 0.8)',
+                borderWidth: 2,
+                fill: false
             }]
         },
         options: {
@@ -159,7 +231,7 @@ async function LineChartIt(inputValue){
     });
 }
 
-LineChartIt(selectedValue);
+LineChartIt(selectedValue, selectedValue2);
 
 let barChart = undefined;
 
@@ -193,7 +265,7 @@ async function getDataForBarChart(requestValue){
             bar_data = data.closest_home_values;
             distances_in_km = data.closest_dist;
             x_labels_2 = x_labels_1_5.map((closest_zipcode, index) => {
-                if (index == 1){
+                if (index == 0){
                     return closest_zipcode
                 }
                 else{
@@ -224,10 +296,10 @@ async function BarChartIt(inputValue){
         data: {
             labels: x_labels_2, //['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
             datasets: [{
-                label: 'Bar Dataset',
+                label: 'Closest Zipcodes',
                 data: bar_data, //[12, 19, 3, 5, 2, 3],
-                backgroundColor: 'rgba(153, 102, 255, 0.6)',
-                borderColor: 'rgba(153, 102, 255, 1)',
+                backgroundColor: ['rgba(53, 207, 153, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)'], //'rgba(153, 102, 255, 0.6)',
+                borderColor: 'rgba(165, 165, 165, 0.4)', //'rgba(153, 102, 255, 1)',
                 borderWidth: 1
             }]
         },
@@ -272,6 +344,7 @@ mapUpdate(selectedValue);
 
 // Get the button element
 const button = document.getElementById('search-btn');
+const button2 = document.getElementById('search-btn2');
 const map_frame = document.getElementById('map-frame');
 
 // Add a click event listener to the button
@@ -279,11 +352,12 @@ const map_frame = document.getElementById('map-frame');
 button.onclick=async() => {
     //const selectedValue = $('#dropdown').val(); // Get selected value
     var updatedValue = $('#dropdown').val();
+    var forecastValue = $('#dropdown2').val();
     await mapUpdate(updatedValue);
     map_frame.src = map_frame.src // Reloads the current page
     
 
-    LineChartIt(updatedValue);
+    LineChartIt(updatedValue, forecastValue);
     BarChartIt(updatedValue);
 
     if (updatedValue) {
@@ -291,7 +365,19 @@ button.onclick=async() => {
     } else {
         alert('Please select an option first!');
     }
+};
 //});
+button2.onclick=async() => {
+    var updatedValue = $('#dropdown').val();
+    var forecastValue = $('#dropdown2').val();
+    
+    LineChartIt(updatedValue, forecastValue);
+
+    if (forecastValue) {
+        //prompt('You selected:', updatedValue); // Show the selected value in a prompt
+    } else {
+        alert('Please select an option first!');
+    }
 };
 
 // Populate the Select 2 Dropdown list

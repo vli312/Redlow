@@ -10,9 +10,16 @@ from sklearn.metrics.pairwise import haversine_distances
 from math import radians
 import folium
 from folium.plugins import FastMarkerCluster, MarkerCluster
+import numpy as np
+import pandas as pd
+import pmdarima as pm
 
 
 LATEST_YEAR = ['2024-03-31','2024-04-30','2024-05-31','2024-06-30','2024-07-31','2024-08-31','2024-09-30','2024-10-31','2024-11-30','2024-12-31','2025-01-31','2025-02-28']
+LATEST_15MONTHS = ['2023-12-31','2024-01-31','2024-02-29','2024-03-31','2024-04-30','2024-05-31','2024-06-30','2024-07-31','2024-08-31','2024-09-30','2024-10-31','2024-11-30','2024-12-31','2025-01-31','2025-02-28']
+LATEST_3YEARS = ['2022-03-31','2022-04-30','2022-05-31','2022-06-30','2022-07-31','2022-08-31','2022-09-30','2022-10-31','2022-11-30','2022-12-31','2023-01-31','2023-02-28', \
+                 '2023-03-31','2023-04-30','2023-05-31','2023-06-30','2023-07-31','2023-08-31','2023-09-30','2023-10-31','2023-11-30','2023-12-31','2024-01-31','2024-02-29', \
+                 '2024-03-31','2024-04-30','2024-05-31','2024-06-30','2024-07-31','2024-08-31','2024-09-30','2024-10-31','2024-11-30','2024-12-31','2025-01-31','2025-02-28']
 
 
 # Create your views here.
@@ -224,9 +231,90 @@ def plotPopulate_neighbourhood(request):
             closest_dist.append(_dist)
         return Response({'closest_neighbourhoods':closest_neighbourhoods, 'closest_home_values':closest_home_values, 'closest_dist':closest_dist})
 
+
+@api_view(['PATCH']) # PATCH for line plot
+def plotForecast_zipcode(request):
+    data = json.loads(request.body) # Testing with {"zipcode":"22305","forecast":"3 Months"}
+    zipcode = data["zipcode"]
+    forecast_option = data["forecast"]
+    print(forecast_option)
+    if forecast_option == '1': sel_periods = 1
+    elif forecast_option == '2': sel_periods = 3
+    else: sel_periods = 6
+    zeros = np.zeros((len(LATEST_3YEARS),1))
+    df = pd.DataFrame(columns=['Home Value'], index=LATEST_3YEARS, data=zeros)
+    recordZipCode = ZipCode.objects.get(zip_code=zipcode)
+    dataZipCode = ZipCodeSerializer(recordZipCode).data
+    region = dataZipCode["region"]
+    for month in LATEST_3YEARS:
+        recordPrices = Prices.objects.get(region=region, date=month)
+        dataPrices = PricesSerializer(recordPrices).data
+        #print(dataPrices)
+        df.loc[month, 'Home Value'] = dataPrices['home_value']
+    #print(df)
+    df.index = pd.to_datetime(df.index)
+    SARIMA_model = pm.auto_arima(df[['Home Value']], #exogenous=df[[each for each in top_n if each != zipcode]],
+                                 start_p=1, start_q=1,
+                                 test='adf',
+                                 max_p=3, max_q=3, m=12,
+                                 start_P=0, seasonal=True,
+                                 d=None, D=1,
+                                 trace=False,
+                                 error_action='ignore',
+                                 suppress_warnings=True,
+                                 stepwise=True)
+    fitted, confint = SARIMA_model.predict(n_periods=sel_periods,
+                                           return_conf_int=True)#, exogenous=forecast_df[['month_index']])
+    index_of_forecast = pd.date_range(df.index[-1] + pd.DateOffset(months=1), periods=sel_periods, freq='MS')
+    months_of_forecast = [str(x)[:10] for x in list(index_of_forecast)]
+    lower_confint = pd.Series(confint[:, 0], index=index_of_forecast)
+    upper_confint = pd.Series(confint[:, 1], index=index_of_forecast)
+    return Response({'months':months_of_forecast, 'forecast':list(fitted), 'lower_confint':list(lower_confint), 'upper_confint':list(upper_confint)})
+
+
+@api_view(['PATCH']) # PATCH for line plot
+def plotForecast_neighbourhood(request):
+    data = json.loads(request.body) # Testing with {"neighbourhood_state":"Pearl District, MD","forecast":"3 Months"}
+    neighbourhood, state = data["neighbourhood_state"].split(", ")
+    forecast_option = data["forecast"]
+    #print(forecast_option)
+    if forecast_option == '1': sel_periods = 1
+    elif forecast_option == '2': sel_periods = 2
+    else: sel_periods = 3
+    zeros = np.zeros((len(LATEST_15MONTHS),1))
+    df = pd.DataFrame(columns=['Home Value'], index=LATEST_15MONTHS, data=zeros) # ONLY 1 YEAR OF CONTINUOUS DATA AVAILABLE
+    recordZipCode = Region.objects.get(region_name=neighbourhood, state=state)
+    dataZipCode = RegionSerializer(recordZipCode).data
+    region = dataZipCode["region_id"]
+    for month in LATEST_15MONTHS:
+        recordPrices = Prices.objects.get(region=region, date=month)
+        dataPrices = PricesSerializer(recordPrices).data
+        df.loc[month, 'Home Value'] = dataPrices['home_value']
+    df.index = pd.to_datetime(df.index)
+    print(df)
+    SARIMA_model = pm.auto_arima(df[['Home Value']], #exogenous=df[[each for each in top_n if each != zipcode]],
+                                 start_p=1, start_q=1,
+                                 test='adf',
+                                 max_p=3, max_q=3, m=6, #m=12,
+                                 start_P=0, seasonal=True,
+                                 d=None, D=1,
+                                 trace=False,
+                                 error_action='ignore',
+                                 suppress_warnings=True,
+                                 stepwise=True)
+    fitted, confint = SARIMA_model.predict(n_periods=sel_periods,
+                                           return_conf_int=True)#, exogenous=forecast_df[['month_index']])
+    index_of_forecast = pd.date_range(df.index[-1] + pd.DateOffset(months=1), periods=sel_periods, freq='MS')
+    months_of_forecast = [str(x)[:10] for x in list(index_of_forecast)]
+    lower_confint = pd.Series(confint[:, 0], index=index_of_forecast)
+    upper_confint = pd.Series(confint[:, 1], index=index_of_forecast)
+    return Response({'months':months_of_forecast, 'forecast':list(fitted), 'lower_confint':list(lower_confint), 'upper_confint':list(upper_confint)})
+
+
 #========================================================
 #================== Support Functions ===================
 #========================================================
+
 
 def calculate_dist_by_lat_lon(lat1, lon1, lat2, lon2):
     rad1 = [radians(lat1), radians(lon1)]
@@ -234,3 +322,4 @@ def calculate_dist_by_lat_lon(lat1, lon1, lat2, lon2):
     hsd = haversine_distances([rad1, rad2])
     dist_in_km = hsd * 6371000/1000  # multiply by Earth radius to get kilometers
     return float(dist_in_km[0][1])
+
