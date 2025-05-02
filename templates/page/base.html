@@ -35,10 +35,6 @@
         <nav id='navbar'>
             <a href='{% url 'page:homeview' %}' class={% block homeSelected %}{% endblock %}>Home</a>
             <a href="{% url 'page:productview' %}" class={% block productSelected %}{% endblock %}>Product</a>
-<<<<<<< HEAD
-=======
-            <a href="{% url 'page:designview' %}" class={% block designSelected %}{% endblock %}>Design</a>
->>>>>>> 8cffef8490a4ab850ae3af9b1d1b3f2bca8e328a
             <a href="{% url 'page:reviewview' %}" class={% block reviewSelected %}{% endblock %}>Review</a>
             <a href="{% url 'page:aboutview' %}" class={% block aboutSelected %}{% endblock %}>About</a>
             <form action='search-results.html' method='get' id='search'>

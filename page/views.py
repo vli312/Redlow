@@ -1,9 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
-<<<<<<< HEAD
-=======
 from django.views.decorators.clickjacking import xframe_options_exempt
->>>>>>> 8cffef8490a4ab850ae3af9b1d1b3f2bca8e328a
 
 from page.models import Review
 from page.models import Region
@@ -84,8 +81,6 @@ def faqview(request):
 def contactview(request):
     return render(request,
                   'page/page_story/contact.html')
-<<<<<<< HEAD
-=======
 
 @xframe_options_exempt
 def zipcodemapview(request):
@@ -97,4 +92,3 @@ def neighbourhoodmapview(request):
     return render(request,
                   'page/page_story/folium_map_neighbourhood.html')
 
->>>>>>> 8cffef8490a4ab850ae3af9b1d1b3f2bca8e328a

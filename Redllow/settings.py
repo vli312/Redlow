@@ -42,13 +42,9 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'django.contrib.admin',
     'users.apps.UsersConfig',
-<<<<<<< HEAD
-    'comments.apps.CommentsConfig'
-=======
     'comments.apps.CommentsConfig',
     'rest_framework',
     'region_api',
->>>>>>> 8cffef8490a4ab850ae3af9b1d1b3f2bca8e328a
 ]
 
 MIDDLEWARE = [
@@ -89,17 +85,9 @@ WSGI_APPLICATION = 'Redllow.wsgi.application'
 DATABASES = {
     'default': {
         "ENGINE": "django.db.backends.postgresql",
-<<<<<<< HEAD
-        "NAME": "cs5614db",
-        "USER": "postgres",
-        "PASSWORD": "Bhalloo1473@",
-=======
-        #"NAME": "cs5614db",
         "NAME": "redllow_db",
-        "USER": "postgres",
-        #"PASSWORD": "Bhalloo1473@",
-        "PASSWORD": "password",
->>>>>>> 8cffef8490a4ab850ae3af9b1d1b3f2bca8e328a
+        "USER": "redllow_user",
+        "PASSWORD": "Dengming1972!",
         "HOST": "127.0.0.1",
         "PORT": "5432",
     }

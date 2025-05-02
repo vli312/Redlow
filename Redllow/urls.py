@@ -21,8 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('page.urls')),
     path('users/', include('users.urls')),
-<<<<<<< HEAD
-=======
     path('region_api/', include('region_api.urls', namespace='region_api')),
->>>>>>> 8cffef8490a4ab850ae3af9b1d1b3f2bca8e328a
 ]
