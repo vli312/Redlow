@@ -66,6 +66,10 @@ def productview(request):
     return render(request,
                   'page/page_story/product.html')
 
+def designview(request):
+    return render(request,
+                  'page/page_story/design.html')
+
 def privacyview(request):
     return render(request,
                   'page/page_story/privacy.html')

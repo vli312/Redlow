@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZipCode-level Home Values</title>
+    <title>Neighbourhood-level Home Values</title>
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <!-- Chart.js -->
@@ -69,7 +69,7 @@
     <main>
         <div class="left-half">
             <!-- Folium map placeholder -->
-            <iframe src="zipcodemap.html" id="map-frame"></iframe>
+            <iframe src="neighbourhoodmap.html" id="map-frame"></iframe>
         </div>
         <div class="right-half">
             <div class="chart-container">
@@ -92,13 +92,13 @@ $(document).ready(function() {
 
 let lineChart = undefined;
 
-var selectedValue = "22193"; // default
+var selectedValue = "Pearl District, MD"; // default
 var x_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']; // default
 var line_data = [10, 20, 15, 30, 25, 35]; // default
 
 async function getDataForLineChart(requestValue){
     //prompt('You selected:', requestValue)
-    const api_endpoint_2 = location.protocol + '//' + location.host + '/region_api/plotPopulate_zipcode';
+    const api_endpoint_2 = location.protocol + '//' + location.host + '/region_api/plotPopulate_neighbourhood';
     //prompt(api_endpoint_2)
 
     const response = await fetch(api_endpoint_2, {
@@ -108,7 +108,7 @@ async function getDataForLineChart(requestValue){
         },
         body: JSON.stringify({
             // data to update
-            'zipcode' : requestValue.toString()
+            'neighbourhood_state' : requestValue.toString()
         })
         })
         .then(response => {
@@ -163,13 +163,13 @@ LineChartIt(selectedValue);
 
 let barChart = undefined;
 
-selectedValue = "22193"; // default
+selectedValue = "Pearl District, MD"; // default
 var x_labels_1_5 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']; // default
 var bar_data = [12, 19, 3, 5, 2, 3]; // default
 var x_labels_2 = undefined
 
 async function getDataForBarChart(requestValue){
-    const api_endpoint_3 = location.protocol + '//' + location.host + '/region_api/plotPopulate_zipcode';
+    const api_endpoint_3 = location.protocol + '//' + location.host + '/region_api/plotPopulate_neighbourhood';
 
     const response = await fetch(api_endpoint_3, {
         method: 'PUT',
@@ -178,7 +178,7 @@ async function getDataForBarChart(requestValue){
         },
         body: JSON.stringify({
             // data to update
-            'zipcode' : requestValue.toString()
+            'neighbourhood_state' : requestValue.toString()
         })
         })
         .then(response => {
@@ -189,12 +189,17 @@ async function getDataForBarChart(requestValue){
         })
         .then(data => {
         // handle the response data
-            x_labels_1_5 = data.closest_zipcodes;
+            x_labels_1_5 = data.closest_neighbourhoods;
             bar_data = data.closest_home_values;
             distances_in_km = data.closest_dist;
-            x_labels_2 = x_labels_1_5.map((closest_zipcode, index) => {
-                const distance = distances_in_km[index];
-                return (closest_zipcode+' ('+ Math.round(10*distance)/10 + 'km)')
+            x_labels_2 = x_labels_1_5.map((closest_neighbourhood, index) => {
+                if (index == 1){
+                    return closest_neighbourhood
+                }
+                else{
+                    const distance = distances_in_km[index];
+                    return (closest_neighbourhood+' ('+ Math.round(10*distance)/10 + 'km)')
+                }
             });
             //prompt('You received:', data.closest_zipcodes)
             //prompt('You received:', data.closest_home_values)
@@ -236,7 +241,7 @@ async function BarChartIt(inputValue){
 BarChartIt(selectedValue);
 
 async function mapUpdate(region){
-    const api_endpoint_4 = location.protocol + '//' + location.host + '/region_api/mapFilter_zipcode';
+    const api_endpoint_4 = location.protocol + '//' + location.host + '/region_api/mapFilter_neighbourhood';
     const response = await fetch(api_endpoint_4, {
         method: 'PATCH',
         headers: {
@@ -244,7 +249,7 @@ async function mapUpdate(region){
         },
         body: JSON.stringify({
             // data to update
-            'zipcode' : region.toString()
+            'neighbourhood_state' : region.toString()
         })
         })
         .then(response => {
@@ -290,7 +295,7 @@ button.onclick=async() => {
 };
 
 // Populate the Select 2 Dropdown list
-const api_endpoint_1 = location.protocol + '//' + location.host + '/region_api/list_zipcodes';
+const api_endpoint_1 = location.protocol + '//' + location.host + '/region_api/list_neighbourhoods';
 
 fetch(api_endpoint_1)  // Replace with your real API URL
     .then(response => response.json())
@@ -300,9 +305,9 @@ fetch(api_endpoint_1)  // Replace with your real API URL
 $('#dropdown').empty();
 
 // Assuming data is like { ids: [1,2,3,4] }
-data.zipcodes.forEach(zipcode => {
+data.neighbourhood_state.forEach(neighbourhood_state => {
     // Append new options
-    var newOption = new Option(zipcode, zipcode, false, false);
+    var newOption = new Option(neighbourhood_state, neighbourhood_state, false, false);
     $('#dropdown').append(newOption);
 });
 

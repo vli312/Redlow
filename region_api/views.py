@@ -2,7 +2,8 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import TestUserSerializer, ZipCodeSerializer, NeighbourhoodSerializer, PricesSerializer, MapLocationSerializer
+from .serializers import TestUserSerializer, ZipCodeSerializer, NeighbourhoodSerializer, \
+    PricesSerializer, MapLocationSerializer, RegionSerializer
 from page.models import Region, MapLocation, Neighbourhood, ZipCode, Prices
 import json
 from sklearn.metrics.pairwise import haversine_distances
@@ -23,8 +24,11 @@ def list_zipcodes(request):
 
 @api_view(['GET'])
 def list_neighbourhoods(request):
-    neighbourhoods = Neighbourhood.objects.values_list('id', flat=True) # Change 'id' to 'neighbourhood' after implementation
-    return Response({'neighbourhoods':neighbourhoods})
+    #neighbourhoods = Neighbourhood.objects.values_list('id', flat=True) # Change 'id' to 'neighbourhood' after implementation
+    neighbourhoods = Region.objects.filter(region_type='neighbourhood').values_list('region_name', flat=True)
+    states = Region.objects.filter(region_type='neighbourhood').values_list('state', flat=True)
+    neighbourhood_state = [str(neighbourhoods[i])+", "+str(states[i]) for i in range(len(states))]
+    return Response({'neighbourhood_state':neighbourhood_state})
 
 
 @api_view(['PATCH'])
@@ -67,7 +71,39 @@ def mapFilter_zipcode(request):
 
 @api_view(['PATCH'])
 def mapFilter_neighbourhood(request):
-    return Response(TestUserSerializer({'name':'sandy','age':29}).data)
+    data = json.loads(request.body) # Testing with {"neighbourhood_state":"Pearl District, MD"}
+    neighbourhood, state = data["neighbourhood_state"].split(", ")
+    recordNeighbourhood = Region.objects.filter(region_type='neighbourhood').get(region_name=str(neighbourhood), state=str(state))
+    dataNeighbourhood = RegionSerializer(recordNeighbourhood).data
+    location = dataNeighbourhood["location"]
+    recordMapLocation = MapLocation.objects.get(id=location)
+    dataMapLocation = MapLocationSerializer(recordMapLocation).data
+    lat1, lon1 = dataMapLocation["latitude"], dataMapLocation["longitude"]
+    neighbourhoods_locations = Region.objects.filter(region_type='neighbourhood').values_list('region_name','state','location')
+    neighbourhoods_lat_lon = []
+    for _neighbourhood, _state, _location in neighbourhoods_locations:
+        otherRecordMapLocation = MapLocation.objects.get(id=_location)
+        otherDataMapLocation = MapLocationSerializer(otherRecordMapLocation).data
+        lat2, lon2 = otherDataMapLocation["latitude"], otherDataMapLocation["longitude"]
+        neighbourhoods_lat_lon.append((str(_neighbourhood)+", "+str(_state), lat2, lon2))
+    # Create a Folium map object
+    center = [lat1, lon1] # Selected Neighbourhood
+    dmv_map = folium.Map(location=center, zoom_start=13)  # Adjust zoom_start as needed
+    marker_cluster = MarkerCluster( # Method 3: Cluster + Popup
+        name='Neighbourhoods Cluster',
+        overlay=True,
+        control=False,
+        icon_create_function=None)
+    for i in range(len(neighbourhoods_lat_lon)):
+        location = neighbourhoods_lat_lon[i][1], neighbourhoods_lat_lon[i][2]
+        marker = folium.Marker(location=location)
+        popup = neighbourhoods_lat_lon[i][0]
+        folium.Popup(popup).add_to(marker)
+        marker_cluster.add_child(marker)
+    marker_cluster.add_to(dmv_map)
+    folium.LayerControl().add_to(dmv_map)
+    dmv_map.save("templates/page/page_story/folium_map_neighbourhood.html")
+    return Response({"status":"success"})
 
 
 @api_view(['PATCH', 'PUT']) # PATCH for line plot and PUT for bar plot 
@@ -119,6 +155,7 @@ def plotPopulate_zipcode(request):
         closest_home_values = []
         closest_dist = []
         top_7 = sorted(distance_zipcodes)[:7]
+        top_7 = [(0, str(zipcode))] + top_7
         for _dist, _zipcode in top_7:
             _recordZipCode = ZipCode.objects.get(zip_code=_zipcode)
             _dataZipCode = ZipCodeSerializer(_recordZipCode).data
@@ -133,9 +170,59 @@ def plotPopulate_zipcode(request):
 
 
 
-@api_view(['POST', 'PUT']) # PUT for bar plot and POST for line plot
+@api_view(['PATCH', 'PUT']) # PUT for bar plot and POST for line plot
 def plotPopulate_neighbourhood(request):
-    return Response(TestUserSerializer({'name':'sandy','age':29}).data)
+    data = json.loads(request.body) # Testing with {"neighbourhood_state":"Pearl District, MD"}
+    if request.method == 'PATCH':
+        months = []
+        home_values = []
+        neighbourhood, state = data["neighbourhood_state"].split(", ")
+        recordNeighbourhood = Region.objects.filter(region_type='neighbourhood').get(region_name=str(neighbourhood), state=str(state))
+        dataNeighbourhood = RegionSerializer(recordNeighbourhood).data
+        region = dataNeighbourhood["region_id"]
+        for month in LATEST_YEAR:
+            recordPrices = Prices.objects.get(region=region, date=month)
+            dataPrices = PricesSerializer(recordPrices).data
+            months.append(dataPrices['date'])
+            home_values.append(dataPrices['home_value'])
+        return Response({'months':months, 'home_values':home_values})
+    elif request.method == 'PUT':
+        neighbourhood, state = data["neighbourhood_state"].split(", ")
+        recordNeighbourhood = Region.objects.filter(region_type='neighbourhood').get(region_name=str(neighbourhood), state=str(state))
+        dataNeighbourhood = RegionSerializer(recordNeighbourhood).data
+        region = dataNeighbourhood["region_id"] # Used in the final section below
+        location = dataNeighbourhood["location"]
+        recordMapLocation = MapLocation.objects.get(id=location)
+        dataMapLocation = MapLocationSerializer(recordMapLocation).data
+        lat1, lon1 = dataMapLocation["latitude"], dataMapLocation["longitude"]
+        neighbourhoods_locations = Region.objects.filter(region_type='neighbourhood').values_list('region_name','state','location')
+        distance_neighbourhoods = []
+        for _neighbourhood, _state, _location in neighbourhoods_locations:
+            if _neighbourhood == neighbourhood and _state == state:
+                continue
+            else:
+                otherRecordMapLocation = MapLocation.objects.get(id=_location)
+                otherDataMapLocation = MapLocationSerializer(otherRecordMapLocation).data
+                lat2, lon2 = otherDataMapLocation["latitude"], otherDataMapLocation["longitude"]
+                dist = calculate_dist_by_lat_lon(lat1=lat1, lon1=lon1, lat2=lat2, lon2=lon2)
+                distance_neighbourhoods.append((dist, _neighbourhood, _state))
+        closest_neighbourhoods = []
+        closest_home_values = []
+        closest_dist = []
+        top_7 = sorted(distance_neighbourhoods)[:7]
+        recordPrices = Prices.objects.get(region=region, date=LATEST_YEAR[-1])
+        dataPrices = PricesSerializer(recordPrices).data
+        top_7 = [(0, str(neighbourhood), str(state))] + top_7
+        for _dist, _neighbourhood, _state in top_7:
+            _recordNeighbourhood = Region.objects.filter(region_type='neighbourhood').get(region_name=_neighbourhood, state=_state)
+            _dataNeighbourhood = RegionSerializer(_recordNeighbourhood).data
+            _region = _dataNeighbourhood["region_id"]
+            recordPrices = Prices.objects.get(region=_region, date=LATEST_YEAR[-1])
+            dataPrices = PricesSerializer(recordPrices).data
+            closest_neighbourhoods.append(str(_neighbourhood)+", "+str(_state))
+            closest_home_values.append(dataPrices['home_value'])
+            closest_dist.append(_dist)
+        return Response({'closest_neighbourhoods':closest_neighbourhoods, 'closest_home_values':closest_home_values, 'closest_dist':closest_dist})
 
 #========================================================
 #================== Support Functions ===================

@@ -1,10 +1,15 @@
 from rest_framework import serializers
 from .models import TestUser
-from page.models import ZipCode, Neighbourhood, Prices, MapLocation
+from page.models import ZipCode, Neighbourhood, Prices, MapLocation, Region
 
 class TestUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestUser
+        fields = '__all__'
+
+class RegionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Region
         fields = '__all__'
 
 class ZipCodeSerializer(serializers.ModelSerializer):
