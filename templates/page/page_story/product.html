@@ -1,9 +1,7 @@
-
 {% extends 'page/base.html' %}
 {% load static %}
 {% block page-title %}Product{% endblock %}
 {% block productSelected %}selected{% endblock %}
-
 
 {% block content %}
 <head>
@@ -19,13 +17,14 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!-- Folium Map (we'll embed an iframe) -->
     <style>
-        body {
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
         }
+
         header {
             padding: 10px;
             background-color: #f8f9fa;
@@ -33,64 +32,98 @@
             align-items: center;
             gap: 10px;
         }
-        main {
+
+        .form-container {
             display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-        .left-half {
-            flex: 1;
-            border-right: 1px solid #ccc;
-        }
-        .right-half {
-            flex: 1;
-            display: flex;
+            justify-content: center;
+            gap: 10px;
             flex-wrap: wrap;
-            justify-content: space-between;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .content-container {
+            display: flex;
             flex-direction: column;
+            flex: 1;
+            overflow: auto;
         }
-        .filterbox {
-            flex: 0 100% 100%;
+
+        .plots-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            height: auto;
         }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+            height: 50vh; /* Dynamic height based on viewport */
+            width: 100%;
+            margin-top: 10px;
+        }
+
         .chart-container {
             flex: 1;
             padding: 10px;
+            margin-bottom: 20px;
+            height: calc(50vh - 20px); /* Dynamic height for charts */
         }
+
         footer {
             padding: 10px;
             background-color: #f1f1f1;
             text-align: center;
         }
+
         iframe {
             width: 100%;
             height: 100%;
             border: none;
+        }
+
+        @media screen and (max-width: 768px) {
+            .form-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .content-container {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .map-container, .chart-container {
+                height: 250px;
+            }
         }
     </style>
 </head>
 <body>
     <header>
     </header>
-    <main>
-        <div class="left-half">
-            <select id="dropdown" style="width: 200px;">
-                <option value="1">Option 1</option>
-                <option value="2">Option 2</option>
-                <option value="3">Option 3</option>
-            </select>
-            <button id="search-btn">Update</button>
-            <!-- Folium map placeholder -->
-            <iframe src="zipcodemap.html" id="map-frame"></iframe>
-        </div>
-        <div class="right-half">
-            <div class="button">
-                <select id="dropdown2" style="width: 200px;">
-                    <option value="1">1 Month</option>
-                    <option value="2">3 Months</option>
-                    <option value="3">6 Months</option>
-                </select>
-                <button id="search-btn2">Forecast</button>
-            </div>
+
+    <div class="form-container">
+        <select id="dropdown" style="width: 200px;">
+            <option value="1">Option 1</option>
+            <option value="2">Option 2</option>
+            <option value="3">Option 3</option>
+        </select>
+        <button id="search-btn">Update</button>
+        <select id="dropdown2" style="width: 200px;">
+            <option value="1">1 Month</option>
+            <option value="2">3 Months</option>
+            <option value="3">6 Months</option>
+        </select>
+        <button id="search-btn2">Forecast</button>
+    </div>
+
+    <div class="content-container">
+        <!-- Plots (charts) container -->
+        <div class="plots-container">
             <div class="chart-container">
                 <canvas id="line-chart"></canvas>
             </div>
@@ -98,175 +131,149 @@
                 <canvas id="bar-chart"></canvas>
             </div>
         </div>
-    </main>
+
+        <!-- Map container -->
+        <div class="map-container">
+            <iframe src="zipcodemap.html" id="map-frame"></iframe>
+        </div>
+    </div>
+
     <footer>
         <!-- Empty Footer -->
     </footer>
 
     <script>
-// Initialize Select2
-$(document).ready(function() {
-    $('#dropdown').select2();
-});
-$(document).ready(function() {
-    $('#dropdown2').select2();
-});
+    // Initialize Select2
+    $(document).ready(function() {
+        $('#dropdown').select2();
+    });
+    $(document).ready(function() {
+        $('#dropdown2').select2();
+    });
 
-let lineChart = undefined;
+    let lineChart = undefined;
 
-var selectedValue = "22193"; // default
-var selectedValue2 = "1 Month"; // default
-var x_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']; // default
-var line_data = [10, 20, 15, 30, 25, 35]; // default
-var line_forecast_data = [1, 2, 3]
-var line_lower_confint_data = [0, 1, 2]
-var line_upper_confint_data = [2, 3, 4]
+    var selectedValue = "22193"; // default
+    var selectedValue2 = "1 Month"; // default
+    var x_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']; // default
+    var line_data = [10, 20, 15, 30, 25, 35]; // default
+    var line_forecast_data = [1, 2, 3]
+    var line_lower_confint_data = [0, 1, 2]
+    var line_upper_confint_data = [2, 3, 4]
 
-async function getDataForLineChart(requestValue, requestValue2){
-    //prompt('You selected:', requestValue)
-    const api_endpoint_2 = location.protocol + '//' + location.host + '/region_api/plotPopulate_zipcode';
-    //prompt(api_endpoint_2)
-
-    const response = await fetch(api_endpoint_2, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            // data to update
-            'zipcode' : requestValue.toString()
+    async function getDataForLineChart(requestValue, requestValue2){
+        const api_endpoint_2 = location.protocol + '//' + location.host + '/region_api/plotPopulate_zipcode';
+        const response = await fetch(api_endpoint_2, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'zipcode' : requestValue.toString()
+            })
         })
-        })
-        .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-        // handle the response data
             x_labels = data.months;
             line_data = data.home_values;
-            //prompt('You received:', data.months)
-            //prompt('You received:', data.home_values)
-        //console.log('Success:', data);
         })
         .catch(error => {
-        // handle errors
-        console.error('Error:', error);
+            console.error('Error:', error);
         });
 
-    const api_endpoint_5 = location.protocol + '//' + location.host + '/region_api/plotForecast_zipcode';
+        const api_endpoint_5 = location.protocol + '//' + location.host + '/region_api/plotForecast_zipcode';
 
-    const response2 = await fetch(api_endpoint_5, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            // data to update
-            'zipcode' : requestValue.toString(),
-            'forecast' : requestValue2.toString()
+        const response2 = await fetch(api_endpoint_5, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'zipcode' : requestValue.toString(),
+                'forecast' : requestValue2.toString()
+            })
         })
-        })
-        .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-        // handle the response data
             x_labels = x_labels.concat(data.months);
             line_forecast_data = data.forecast;
             line_lower_confint_data = data.lower_confint;
             line_upper_confint_data = data.upper_confint;
         })
         .catch(error => {
-        // handle errors
-        console.error('Error:', error);
+            console.error('Error:', error);
         });
-}
-
-async function LineChartIt(inputValue, inputValue2){
-    //prompt('You selected:', inputValue)
-    if (lineChart) { // Before creation comes destruction.... seriosly...
-        lineChart.destroy();
     }
-    await getDataForLineChart(inputValue, inputValue2);
-    // Line Chart
-    const lineCtx = document.getElementById('line-chart').getContext('2d');
-    //const lineChart = new Chart(lineCtx, {
-    lineChart = new Chart(lineCtx, {
-        type: 'line',
-        data: {
-            labels: x_labels, //['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-                label: 'Home Values for the last 12 months',
-                data: line_data, //[10, 20, 15, 30, 25, 35],
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 2,
-                fill: false
-            },
-            {
-                label: 'Forecast Values for the selected period',
-                data: line_data.concat(line_forecast_data), //[10, 20, 15, 30, 25, 35],
-                borderColor: 'rgba(250, 170, 23, 0.8)',
-                borderWidth: 2,
-                fill: false
-            },
-            {
-                label: 'Upper CI Limit for the selected period',
-                data: line_data.concat(line_upper_confint_data), //[10, 20, 15, 30, 25, 35],
-                borderColor: 'rgba(235, 86, 216, 0.8)',
-                borderWidth: 2,
-                fill: false
-            },
-            {
-                label: 'Lower CI Limit for the selected period',
-                data: line_data.concat(line_lower_confint_data), //[10, 20, 15, 30, 25, 35],
-                borderColor: 'rgba(235, 86, 216, 0.8)',
-                borderWidth: 2,
-                fill: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
+
+    async function LineChartIt(inputValue, inputValue2){
+        if (lineChart) {
+            lineChart.destroy();
         }
-    });
-}
+        await getDataForLineChart(inputValue, inputValue2);
+        const lineCtx = document.getElementById('line-chart').getContext('2d');
+        lineChart = new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: x_labels,
+                datasets: [{
+                    label: 'Home Values for the last 12 months',
+                    data: line_data,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    fill: false
+                },
+                {
+                    label: 'Forecast Values for the selected period',
+                    data: line_data.concat(line_forecast_data),
+                    borderColor: 'rgba(250, 170, 23, 0.8)',
+                    borderWidth: 2,
+                    fill: false
+                },
+                {
+                    label: 'Upper CI Limit for the selected period',
+                    data: line_data.concat(line_upper_confint_data),
+                    borderColor: 'rgba(235, 86, 216, 0.8)',
+                    borderWidth: 2,
+                    fill: false
+                },
+                {
+                    label: 'Lower CI Limit for the selected period',
+                    data: line_data.concat(line_lower_confint_data),
+                    borderColor: 'rgba(235, 86, 216, 0.8)',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
 
-LineChartIt(selectedValue, selectedValue2);
+    LineChartIt(selectedValue, selectedValue2);
 
-let barChart = undefined;
+    let barChart = undefined;
 
-selectedValue = "22193"; // default
-var x_labels_1_5 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']; // default
-var bar_data = [12, 19, 3, 5, 2, 3]; // default
-var x_labels_2 = undefined
+    selectedValue = "22193"; // default
+    var x_labels_1_5 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']; // default
+    var bar_data = [12, 19, 3, 5, 2, 3]; // default
+    var x_labels_2 = undefined
 
-async function getDataForBarChart(requestValue){
-    const api_endpoint_3 = location.protocol + '//' + location.host + '/region_api/plotPopulate_zipcode';
+    async function getDataForBarChart(requestValue){
+        const api_endpoint_3 = location.protocol + '//' + location.host + '/region_api/plotPopulate_zipcode';
 
-    const response = await fetch(api_endpoint_3, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            // data to update
-            'zipcode' : requestValue.toString()
+        const response = await fetch(api_endpoint_3, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'zipcode' : requestValue.toString()
+            })
         })
-        })
-        .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-        // handle the response data
             x_labels_1_5 = data.closest_zipcodes;
             bar_data = data.closest_home_values;
             distances_in_km = data.closest_dist;
@@ -279,139 +286,97 @@ async function getDataForBarChart(requestValue){
                     return (closest_zipcode+' ('+ Math.round(10*distance)/10 + 'km)')
                 }
             });
-            //prompt('You received:', data.closest_zipcodes)
-            //prompt('You received:', data.closest_home_values)
-            //prompt('You received:', data.closest_dist)
         })
         .catch(error => {
-        // handle errors
-        console.error('Error:', error);
+            console.error('Error:', error);
         });
-}
-
-async function BarChartIt(inputValue){
-    if (barChart) { // Before creation comes destruction.... seriosly...
-        barChart.destroy();
     }
-    await getDataForBarChart(inputValue);
-    // Bar Chart
-    const barCtx = document.getElementById('bar-chart').getContext('2d');
-    //const barChart = new Chart(barCtx, {
-    barChart = new Chart(barCtx, {
-        type: 'bar',
-        data: {
-            labels: x_labels_2, //['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-                label: 'Closest Zipcodes',
-                data: bar_data, //[12, 19, 3, 5, 2, 3],
-                backgroundColor: ['rgba(53, 207, 153, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)'], //'rgba(153, 102, 255, 0.6)',
-                borderColor: 'rgba(165, 165, 165, 0.4)', //'rgba(153, 102, 255, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-}
 
-BarChartIt(selectedValue);
-
-async function mapUpdate(region){
-    const api_endpoint_4 = location.protocol + '//' + location.host + '/region_api/mapFilter_zipcode';
-    const response = await fetch(api_endpoint_4, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            // data to update
-            'zipcode' : region.toString()
-        })
-        })
-        .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
+    async function BarChartIt(inputValue){
+        if (barChart) {
+            barChart.destroy();
         }
-        return response.json();
+        await getDataForBarChart(inputValue);
+        const barCtx = document.getElementById('bar-chart').getContext('2d');
+        barChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: x_labels_2,
+                datasets: [{
+                    label: 'Closest Zipcodes',
+                    data: bar_data,
+                    backgroundColor: ['rgba(53, 207, 153, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)'],
+                    borderColor: 'rgba(165, 165, 165, 0.4)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    BarChartIt(selectedValue);
+
+    async function mapUpdate(region){
+        const api_endpoint_4 = location.protocol + '//' + location.host + '/region_api/mapFilter_zipcode';
+        const response = await fetch(api_endpoint_4, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'zipcode' : region.toString()
+            })
         })
+        .then(response => response.json())
         .then(data => {
-        // handle the response data
-            //do nothing
+            // do nothing
         })
         .catch(error => {
-        // handle errors
-        console.error('Error:', error);
+            console.error('Error:', error);
         });
-}
-
-mapUpdate(selectedValue);
-
-// Get the button element
-const button = document.getElementById('search-btn');
-const button2 = document.getElementById('search-btn2');
-const map_frame = document.getElementById('map-frame');
-
-// Add a click event listener to the button
-//button.addEventListener('click', function() {
-button.onclick=async() => {
-    //const selectedValue = $('#dropdown').val(); // Get selected value
-    var updatedValue = $('#dropdown').val();
-    var forecastValue = $('#dropdown2').val();
-    await mapUpdate(updatedValue);
-    map_frame.src = map_frame.src // Reloads the current page
-    
-
-    LineChartIt(updatedValue, forecastValue);
-    BarChartIt(updatedValue);
-
-    if (updatedValue) {
-        //prompt('You selected:', updatedValue); // Show the selected value in a prompt
-    } else {
-        alert('Please select an option first!');
     }
-};
-//});
-button2.onclick=async() => {
-    var updatedValue = $('#dropdown').val();
-    var forecastValue = $('#dropdown2').val();
-    
-    LineChartIt(updatedValue, forecastValue);
 
-    if (forecastValue) {
-        //prompt('You selected:', updatedValue); // Show the selected value in a prompt
-    } else {
-        alert('Please select an option first!');
-    }
-};
+    mapUpdate(selectedValue);
 
-// Populate the Select 2 Dropdown list
-const api_endpoint_1 = location.protocol + '//' + location.host + '/region_api/list_zipcodes';
+    const button = document.getElementById('search-btn');
+    const button2 = document.getElementById('search-btn2');
+    const map_frame = document.getElementById('map-frame');
 
-fetch(api_endpoint_1)  // Replace with your real API URL
-    .then(response => response.json())
-    .then(data => {
+    button.onclick = async () => {
+        var updatedValue = $('#dropdown').val();
+        var forecastValue = $('#dropdown2').val();
+        await mapUpdate(updatedValue);
+        map_frame.src = map_frame.src; // This reloads the iframe dynamically
 
-// Clear existing options
-$('#dropdown').empty();
+        LineChartIt(updatedValue, forecastValue);
+        BarChartIt(updatedValue);
+    };
 
-// Assuming data is like { ids: [1,2,3,4] }
-data.zipcodes.forEach(zipcode => {
-    // Append new options
-    var newOption = new Option(zipcode, zipcode, false, false);
-    $('#dropdown').append(newOption);
-});
+    button2.onclick = async () => {
+        var updatedValue = $('#dropdown').val();
+        var forecastValue = $('#dropdown2').val();
+        LineChartIt(updatedValue, forecastValue);
+    };
 
-// Refresh Select2 after adding options
-$('#dropdown').trigger('change');
-})
-.catch(error => {
-console.error('Error fetching options:', error);
-alert('Failed to fetch options.');
-});
+    const api_endpoint_1 = location.protocol + '//' + location.host + '/region_api/list_zipcodes';
 
-
+    fetch(api_endpoint_1)
+        .then(response => response.json())
+        .then(data => {
+            $('#dropdown').empty();
+            data.zipcodes.forEach(zipcode => {
+                var newOption = new Option(zipcode, zipcode, false, false);
+                $('#dropdown').append(newOption);
+            });
+            $('#dropdown').trigger('change');
+        })
+        .catch(error => {
+            console.error('Error fetching options:', error);
+            alert('Failed to fetch options.');
+        });
     </script>
 </body>
 {% endblock %}

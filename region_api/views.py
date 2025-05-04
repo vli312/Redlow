@@ -31,7 +31,8 @@ def list_zipcodes(request):
 
 @api_view(['GET'])
 def list_neighbourhoods(request):
-    #neighbourhoods = Neighbourhood.objects.values_list('id', flat=True) # Change 'id' to 'neighbourhood' after implementation
+    #neighbourhoods = Neighbourhood.objects.values_list('id', flat=True)
+    #Change 'id' to 'neighbourhood' after implementation
     neighbourhoods = Region.objects.filter(region_type='neighbourhood').values_list('region_name', flat=True)
     states = Region.objects.filter(region_type='neighbourhood').values_list('state', flat=True)
     neighbourhood_state = [str(neighbourhoods[i])+", "+str(states[i]) for i in range(len(states))]

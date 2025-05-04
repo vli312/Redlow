@@ -37,10 +37,6 @@
             <a href="{% url 'page:productview' %}" class={% block productSelected %}{% endblock %}>Product</a>
             <a href="{% url 'page:reviewview' %}" class={% block reviewSelected %}{% endblock %}>Review</a>
             <a href="{% url 'page:aboutview' %}" class={% block aboutSelected %}{% endblock %}>About</a>
-            <form action='search-results.html' method='get' id='search'>
-                <input type='text' id='search-bar' name='search-bar' placeholder='Search'>
-                <input type='submit' id='search-submit' value='Go'>
-            </form>
         </nav><!-- nav bar -->
     </div><!-- header -->
     <div id='content'>
