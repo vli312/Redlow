@@ -26,7 +26,7 @@ LATEST_3YEARS = ['2022-03-31','2022-04-30','2022-05-31','2022-06-30','2022-07-31
 @api_view(['GET'])
 def list_zipcodes(request):
     zipcodes = ZipCode.objects.values_list('zip_code', flat=True)
-    return Response({'zipcodes':zipcodes})
+    return Response({'zipcodes':sorted(zipcodes)})
 
 
 @api_view(['GET'])
@@ -36,7 +36,7 @@ def list_neighbourhoods(request):
     neighbourhoods = Region.objects.filter(region_type='neighbourhood').values_list('region_name', flat=True)
     states = Region.objects.filter(region_type='neighbourhood').values_list('state', flat=True)
     neighbourhood_state = [str(neighbourhoods[i])+", "+str(states[i]) for i in range(len(states))]
-    return Response({'neighbourhood_state':neighbourhood_state})
+    return Response({'neighbourhood_state':sorted(neighbourhood_state)})
 
 
 @api_view(['PATCH'])

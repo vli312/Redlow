@@ -1,0 +1,220 @@
+{% extends 'page/base.html' %}
+{% load static %}
+{% block page-title %}Neighborhood View{% endblock %}
+{% block productSelected %}selected{% endblock %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neighborhood-level Home Values</title>
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Folium Map (we'll embed an iframe) -->
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 10px;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: auto;
+        }
+
+        .plots-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            height: auto;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+            height: 50vh;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .chart-container {
+            flex: 1;
+            padding: 10px;
+            margin-bottom: 20px;
+            height: calc(50vh - 20px);
+        }
+
+        footer {
+            padding: 10px;
+            background-color: #f1f1f1;
+            text-align: center;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        @media screen and (max-width: 768px) {
+            .form-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .content-container {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .map-container, .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <button onclick="window.location.href='/product/'">Back to ZipCode View</button>
+    </header>
+
+    <div class="form-container">
+        <select id="dropdown-neighborhood" style="width: 200px;">
+            <option value="1">Neighborhood 1</option>
+            <option value="2">Neighborhood 2</option>
+            <option value="3">Neighborhood 3</option>
+        </select>
+        <button id="search-btn-neighborhood">Update</button>
+    </div>
+
+    <div class="content-container">
+        <div class="plots-container">
+            <div class="chart-container">
+                <canvas id="line-chart-neighborhood"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="bar-chart-neighborhood"></canvas>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <iframe src="neighborhoodmap.html" id="map-frame-neighborhood"></iframe>
+        </div>
+    </div>
+
+    <footer>
+        <!-- Empty Footer -->
+    </footer>
+
+    <script>
+        // Initialize Select2
+        $(document).ready(function() {
+            $('#dropdown-neighborhood').select2();
+        });
+
+        let lineChart = undefined;
+
+        async function getDataForLineChart(requestValue){
+            const api_endpoint = location.protocol + '//' + location.host + '/region_api/plotPopulate_neighbourhood';
+            const response = await fetch(api_endpoint, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 'neighbourhood' : requestValue.toString() })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update chart data here
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        async function LineChartIt(inputValue){
+            if (lineChart) {
+                lineChart.destroy();
+            }
+            await getDataForLineChart(inputValue);
+            const lineCtx = document.getElementById('line-chart-neighborhood').getContext('2d');
+            lineChart = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar'], // dynamic labels
+                    datasets: [{
+                        label: 'Home Values for the last 12 months',
+                        data: [10, 20, 15], // dynamic data
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        async function BarChartIt(inputValue){
+            const barCtx = document.getElementById('bar-chart-neighborhood').getContext('2d');
+            // Your neighborhood bar chart implementation
+        }
+
+        const button = document.getElementById('search-btn-neighborhood');
+        button.onclick = async () => {
+            const selectedValue = $('#dropdown-neighborhood').val();
+            await LineChartIt(selectedValue);
+            await BarChartIt(selectedValue);
+        };
+
+        // Populate the Neighborhood dropdown
+        const api_endpoint_1 = location.protocol + '//' + location.host + '/region_api/list_neighbourhoods';
+
+        fetch(api_endpoint_1)
+            .then(response => response.json())
+            .then(data => {
+                $('#dropdown-neighborhood').empty();
+                data.neighbourhoods.forEach(neighbourhood => {
+                    var newOption = new Option(neighbourhood, neighbourhood, false, false);
+                    $('#dropdown-neighborhood').append(newOption);
+                });
+                $('#dropdown-neighborhood').trigger('change');
+            })
+            .catch(error => {
+                console.error('Error fetching options:', error);
+                alert('Failed to fetch options.');
+            });
+    </script>
+</body>
+{% endblock %}

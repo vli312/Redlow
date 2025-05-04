@@ -34,7 +34,8 @@
 
         <nav id='navbar'>
             <a href='{% url 'page:homeview' %}' class={% block homeSelected %}{% endblock %}>Home</a>
-            <a href="{% url 'page:productview' %}" class={% block productSelected %}{% endblock %}>Product</a>
+            <a href="{% url 'page:productview' %}" class={% block productSelected %}{% endblock %}>Zip Code</a>
+            <a href="{% url 'page:neighbourhoodview' %}" class={% block neighborhoodSelected %}{% endblock %}>Neighborhood</a>
             <a href="{% url 'page:reviewview' %}" class={% block reviewSelected %}{% endblock %}>Review</a>
             <a href="{% url 'page:aboutview' %}" class={% block aboutSelected %}{% endblock %}>About</a>
         </nav><!-- nav bar -->
