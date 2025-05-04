@@ -1,3 +1,9 @@
+{% extends 'page/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block page-title %}Review{% endblock %}
+{% block reviewSelected %}selected{% endblock %}
+
 {% block content %}
 <head>
     <meta charset="UTF-8">
@@ -19,6 +25,7 @@
             margin: 0;
             font-family: Arial, sans-serif;
         }
+
         header {
             padding: 10px;
             background-color: #f8f9fa;
@@ -26,388 +33,389 @@
             align-items: center;
             gap: 10px;
         }
+
         main {
             display: flex;
             flex: 1;
             overflow: hidden;
+            justify-content: space-between;
+            padding: 20px;
+            height: 100%;
         }
-        .left-half {
-            flex: 1;
-            border-right: 1px solid #ccc;
+
+        .whole {
+            display: flex;
+            flex-direction: row;
+            height: 100%;
         }
-        .right-half {
+
+        .left-half, .right-half{
             flex: 1;
             display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
             flex-direction: column;
+            align-content: center;
+            gap: 20px;
+            height: 100%;
         }
+
         .filterbox {
-            flex: 0 100% 100%;
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            justify-content: center;
         }
+
+        .filterbox select, .filterbox button {
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .map-container {
+            flex-grow: 1;
+            height: 300px;
+            margin-top: 20px;
+        }
+
         .chart-container {
             flex: 1;
             padding: 10px;
         }
+
         footer {
             padding: 10px;
             background-color: #f1f1f1;
             text-align: center;
         }
+
         iframe {
             width: 100%;
             height: 100%;
             border: none;
         }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column;
+            }
+            .filterbox {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .map-container {
+                height: 300px;
+            }
+        }
     </style>
 </head>
+
 <body>
     <header>
+        <!-- Add any header content here if needed -->
     </header>
+
     <main>
-        <div class="left-half">
-            <select id="dropdown" style="width: 200px;">
-                <option value="1">Option 1</option>
-                <option value="2">Option 2</option>
-                <option value="3">Option 3</option>
-            </select>
-            <button id="search-btn">Update</button>
-            <!-- Folium map placeholder -->
-            <iframe src="neighbourhoodmap.html" id="map-frame"></iframe>
-        </div>
-        <div class="right-half">
-            <div class="button">
-                <select id="dropdown2" style="width: 200px;">
-                    <option value="1">1 Month</option>
-                    <option value="2">2 Months</option>
-                    <option value="3">3 Months</option>
-                </select>
-                <button id="search-btn2">Forecast</button>
+        <!-- Left Layout with Map -->
+        <div class="whole">
+            <div class="left-half">
+                <!-- Dropdown and Button for filter -->
+                <div class="filterbox">
+                    <select id="dropdown" style="width: 200px;">
+                        <option value="1">Option 1</option>
+                        <option value="2">Option 2</option>
+                        <option value="3">Option 3</option>
+                    </select>
+                    <button id="search-btn">Update</button>
+                </div>
+                <!-- Map Container -->
+                <div class="map-container">
+                    <iframe src="neighbourhoodmap.html" id="map-frame"></iframe>
+                </div>
             </div>
-            <div class="chart-container">
-                <canvas id="line-chart"></canvas>
-            </div>
-            <div class="chart-container">
-                <canvas id="bar-chart"></canvas>
+
+            <!-- Right Layout with Charts -->
+            <div class="right-half">
+                <!-- Filter Dropdown and Button for Forecast -->
+                <div class="filterbox">
+                    <select id="dropdown2" style="width: 200px;">
+                        <option value="1">1 Month</option>
+                        <option value="2">2 Months</option>
+                        <option value="3">3 Months</option>
+                    </select>
+                    <button id="search-btn2">Forecast</button>
+                </div>
+                <!-- Chart Containers -->
+                <div class="chart-container">
+                    <canvas id="line-chart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="bar-chart"></canvas>
+                </div>
             </div>
         </div>
     </main>
+
     <footer>
-        <!-- Empty Footer -->
     </footer>
 
     <script>
-// Initialize Select2
-$(document).ready(function() {
-    $('#dropdown').select2();
-});
-$(document).ready(function() {
-    $('#dropdown2').select2();
-});
-
-let lineChart = undefined;
-
-var selectedValue = "Pearl District, MD"; // default
-var selectedValue2 = "1 Month"; // default
-var x_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']; // default
-var line_data = [10, 20, 15, 30, 25, 35]; // default
-var line_forecast_data = [1, 2, 3]
-var line_lower_confint_data = [0, 1, 2]
-var line_upper_confint_data = [2, 3, 4]
-
-async function getDataForLineChart(requestValue, requestValue2){
-    //prompt('You selected:', requestValue)
-    const api_endpoint_2 = location.protocol + '//' + location.host + '/region_api/plotPopulate_neighbourhood';
-    //prompt(api_endpoint_2)
-
-    const response = await fetch(api_endpoint_2, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            // data to update
-            'neighbourhood_state' : requestValue.toString()
-        })
-        })
-        .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-        })
-        .then(data => {
-        // handle the response data
-            x_labels = data.months;
-            line_data = data.home_values;
-            //prompt('You received:', data.months)
-            //prompt('You received:', data.home_values)
-        //console.log('Success:', data);
-        })
-        .catch(error => {
-        // handle errors
-        console.error('Error:', error);
+        // Initialize Select2
+        $(document).ready(function() {
+            $('#dropdown').select2();
+        });
+        $(document).ready(function() {
+            $('#dropdown2').select2();
         });
 
-        //prompt('You selected:', requestValue)
-    const api_endpoint_5 = location.protocol + '//' + location.host + '/region_api/plotForecast_neighbourhood';
-    //prompt(api_endpoint_2)
+        let lineChart = undefined;
+        var selectedValue = "Pearl District, MD"; // default
+        var selectedValue2 = "1 Month"; // default
+        var x_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']; // default
+        var line_data = [10, 20, 15, 30, 25, 35]; // default
+        var line_forecast_data = [1, 2, 3]
+        var line_lower_confint_data = [0, 1, 2]
+        var line_upper_confint_data = [2, 3, 4]
 
-    const response2 = await fetch(api_endpoint_5, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            // data to update
-            'neighbourhood_state' : requestValue.toString(),
-            'forecast' : requestValue2.toString()
-        })
-        })
-        .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-        })
-        .then(data => {
-        // handle the response data
-            x_labels = x_labels.concat(data.months);
-            line_forecast_data = data.forecast;
-            line_lower_confint_data = data.lower_confint;
-            line_upper_confint_data = data.upper_confint;
-        })
-        .catch(error => {
-        // handle errors
-        console.error('Error:', error);
-        });
-}
+        async function getDataForLineChart(requestValue, requestValue2){
+            const api_endpoint_2 = location.protocol + '//' + location.host + '/region_api/plotPopulate_neighbourhood';
 
-async function LineChartIt(inputValue, inputValue2){
-    //prompt('You selected:', inputValue)
-    if (lineChart) { // Before creation comes destruction.... seriosly...
-        lineChart.destroy();
-    }
-    await getDataForLineChart(inputValue, inputValue2);
-    // Line Chart
-    const lineCtx = document.getElementById('line-chart').getContext('2d');
-    //const lineChart = new Chart(lineCtx, {
-    lineChart = new Chart(lineCtx, {
-        type: 'line',
-        data: {
-            labels: x_labels, //['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-                label: 'Home Values for the last 12 months',
-                data: line_data, //[10, 20, 15, 30, 25, 35],
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 2,
-                fill: false
-            },
-            {
-                label: 'Forecast Values for the selected period',
-                data: line_data.concat(line_forecast_data), //[10, 20, 15, 30, 25, 35],
-                borderColor: 'rgba(250, 170, 23, 0.8)',
-                borderWidth: 2,
-                fill: false
-            },
-            {
-                label: 'Upper CI Limit for the selected period',
-                data: line_data.concat(line_upper_confint_data), //[10, 20, 15, 30, 25, 35],
-                borderColor: 'rgba(235, 86, 216, 0.8)',
-                borderWidth: 2,
-                fill: false
-            },
-            {
-                label: 'Lower CI Limit for the selected period',
-                data: line_data.concat(line_lower_confint_data), //[10, 20, 15, 30, 25, 35],
-                borderColor: 'rgba(235, 86, 216, 0.8)',
-                borderWidth: 2,
-                fill: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-}
-
-LineChartIt(selectedValue, selectedValue2);
-
-let barChart = undefined;
-
-selectedValue = "Pearl District, MD"; // default
-var x_labels_1_5 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']; // default
-var bar_data = [12, 19, 3, 5, 2, 3]; // default
-var x_labels_2 = undefined
-
-async function getDataForBarChart(requestValue){
-    const api_endpoint_3 = location.protocol + '//' + location.host + '/region_api/plotPopulate_neighbourhood';
-
-    const response = await fetch(api_endpoint_3, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            // data to update
-            'neighbourhood_state' : requestValue.toString()
-        })
-        })
-        .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-        })
-        .then(data => {
-        // handle the response data
-            x_labels_1_5 = data.closest_neighbourhoods;
-            bar_data = data.closest_home_values;
-            distances_in_km = data.closest_dist;
-            x_labels_2 = x_labels_1_5.map((closest_neighbourhood, index) => {
-                if (index == 0){
-                    return closest_neighbourhood
+            const response = await fetch(api_endpoint_2, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    'neighbourhood_state' : requestValue.toString()
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
-                else{
-                    const distance = distances_in_km[index];
-                    return (closest_neighbourhood+' ('+ Math.round(10*distance)/10 + 'km)')
+                return response.json();
+            })
+            .then(data => {
+                x_labels = data.months;
+                line_data = data.home_values;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
+            const api_endpoint_5 = location.protocol + '//' + location.host + '/region_api/plotForecast_neighbourhood';
+
+            const response2 = await fetch(api_endpoint_5, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    'neighbourhood_state' : requestValue.toString(),
+                    'forecast' : requestValue2.toString()
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                x_labels = x_labels.concat(data.months);
+                line_forecast_data = data.forecast;
+                line_lower_confint_data = data.lower_confint;
+                line_upper_confint_data = data.upper_confint;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        async function LineChartIt(inputValue, inputValue2){
+            if (lineChart) {
+                lineChart.destroy();
+            }
+            await getDataForLineChart(inputValue, inputValue2);
+
+            const lineCtx = document.getElementById('line-chart').getContext('2d');
+            lineChart = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: x_labels,
+                    datasets: [{
+                        label: 'Home Values for the last 12 months',
+                        data: line_data,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: 'Forecast Values for the selected period',
+                        data: line_data.concat(line_forecast_data),
+                        borderColor: 'rgba(250, 170, 23, 0.8)',
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: 'Upper CI Limit for the selected period',
+                        data: line_data.concat(line_upper_confint_data),
+                        borderColor: 'rgba(235, 86, 216, 0.8)',
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: 'Lower CI Limit for the selected period',
+                        data: line_data.concat(line_lower_confint_data),
+                        borderColor: 'rgba(235, 86, 216, 0.8)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
                 }
             });
-            //prompt('You received:', data.closest_zipcodes)
-            //prompt('You received:', data.closest_home_values)
-            //prompt('You received:', data.closest_dist)
-        })
-        .catch(error => {
-        // handle errors
-        console.error('Error:', error);
-        });
-}
-
-async function BarChartIt(inputValue){
-    if (barChart) { // Before creation comes destruction.... seriosly...
-        barChart.destroy();
-    }
-    await getDataForBarChart(inputValue);
-    // Bar Chart
-    const barCtx = document.getElementById('bar-chart').getContext('2d');
-    //const barChart = new Chart(barCtx, {
-    barChart = new Chart(barCtx, {
-        type: 'bar',
-        data: {
-            labels: x_labels_2, //['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-                label: 'Closest Neighbourhoods',
-                data: bar_data, //[12, 19, 3, 5, 2, 3],
-                backgroundColor: ['rgba(53, 207, 153, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)'], //'rgba(153, 102, 255, 0.6)',
-                borderColor: 'rgba(165, 165, 165, 0.4)', //'rgba(153, 102, 255, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
         }
-    });
-}
 
-BarChartIt(selectedValue);
+        LineChartIt(selectedValue, selectedValue2);
 
-async function mapUpdate(region){
-    const api_endpoint_4 = location.protocol + '//' + location.host + '/region_api/mapFilter_neighbourhood';
-    const response = await fetch(api_endpoint_4, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            // data to update
-            'neighbourhood_state' : region.toString()
-        })
-        })
-        .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
+        let barChart = undefined;
+
+        selectedValue = "Pearl District, MD";
+        var x_labels_1_5 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+        var bar_data = [12, 19, 3, 5, 2, 3];
+        var x_labels_2 = undefined
+
+        async function getDataForBarChart(requestValue){
+            const api_endpoint_3 = location.protocol + '//' + location.host + '/region_api/plotPopulate_neighbourhood';
+
+            const response = await fetch(api_endpoint_3, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    'neighbourhood_state' : requestValue.toString()
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                x_labels_1_5 = data.closest_neighbourhoods;
+                bar_data = data.closest_home_values;
+                distances_in_km = data.closest_dist;
+                x_labels_2 = x_labels_1_5.map((closest_neighbourhood, index) => {
+                    if (index == 0){
+                        return closest_neighbourhood
+                    }
+                    else{
+                        const distance = distances_in_km[index];
+                        return (closest_neighbourhood+' ('+ Math.round(10*distance)/10 + 'km)')
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
-        return response.json();
-        })
-        .then(data => {
-        // handle the response data
-            //do nothing
-        })
-        .catch(error => {
-        // handle errors
-        console.error('Error:', error);
-        });
-}
 
-mapUpdate(selectedValue);
+        async function BarChartIt(inputValue){
+            if (barChart) {
+                barChart.destroy();
+            }
+            await getDataForBarChart(inputValue);
 
-// Get the button element
-const button = document.getElementById('search-btn');
-const button2 = document.getElementById('search-btn2');
-const map_frame = document.getElementById('map-frame');
+            const barCtx = document.getElementById('bar-chart').getContext('2d');
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: x_labels_2,
+                    datasets: [{
+                        label: 'Closest Neighbourhoods',
+                        data: bar_data,
+                        backgroundColor: ['rgba(53, 207, 153, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)', 'rgba(57, 203, 224, 0.8)'],
+                        borderColor: 'rgba(165, 165, 165, 0.4)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
 
-// Add a click event listener to the button
-//button.addEventListener('click', function() {
-button.onclick=async() => {
-    //const selectedValue = $('#dropdown').val(); // Get selected value
-    var updatedValue = $('#dropdown').val();
-    var forecastValue = $('#dropdown2').val();
-    await mapUpdate(updatedValue);
-    map_frame.src = map_frame.src // Reloads the current page
+        BarChartIt(selectedValue);
 
+        async function mapUpdate(region){
+            const api_endpoint_4 = location.protocol + '//' + location.host + '/region_api/mapFilter_neighbourhood';
+            const response = await fetch(api_endpoint_4, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    'neighbourhood_state' : region.toString()
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
 
-    LineChartIt(updatedValue, forecastValue);
-    BarChartIt(updatedValue);
+        mapUpdate(selectedValue);
 
-    if (updatedValue) {
-        //prompt('You selected:', updatedValue); // Show the selected value in a prompt
-    } else {
-        alert('Please select an option first!');
-    }
-//});
-};
-button2.onclick=async() => {
-    var updatedValue = $('#dropdown').val();
-    var forecastValue = $('#dropdown2').val();
+        // Get the button element
+        const button = document.getElementById('search-btn');
+        const button2 = document.getElementById('search-btn2');
+        const map_frame = document.getElementById('map-frame');
 
-    LineChartIt(updatedValue, forecastValue);
+        button.onclick=async() => {
+            var updatedValue = $('#dropdown').val();
+            var forecastValue = $('#dropdown2').val();
+            await mapUpdate(updatedValue);
+            map_frame.src = map_frame.src; // Reloads the current page
 
-    if (forecastValue) {
-        //prompt('You selected:', updatedValue); // Show the selected value in a prompt
-    } else {
-        alert('Please select an option first!');
-    }
-};
+            LineChartIt(updatedValue, forecastValue);
+            BarChartIt(updatedValue);
+        };
 
+        button2.onclick=async() => {
+            var updatedValue = $('#dropdown').val();
+            var forecastValue = $('#dropdown2').val();
 
-// Populate the Select 2 Dropdown list
-const api_endpoint_1 = location.protocol + '//' + location.host + '/region_api/list_neighbourhoods';
+            LineChartIt(updatedValue, forecastValue);
+        };
 
-fetch(api_endpoint_1)  // Replace with your real API URL
-    .then(response => response.json())
-    .then(data => {
+        // Populate the Select 2 Dropdown list
+        const api_endpoint_1 = location.protocol + '//' + location.host + '/region_api/list_neighbourhoods';
 
-// Clear existing options
-$('#dropdown').empty();
-
-// Assuming data is like { ids: [1,2,3,4] }
-data.neighbourhood_state.forEach(neighbourhood_state => {
-    // Append new options
-    var newOption = new Option(neighbourhood_state, neighbourhood_state, false, false);
-    $('#dropdown').append(newOption);
-});
-
-// Refresh Select2 after adding options
-$('#dropdown').trigger('change');
-})
-.catch(error => {
-console.error('Error fetching options:', error);
-alert('Failed to fetch options.');
-});
-
-
+        fetch(api_endpoint_1)
+            .then(response => response.json())
+            .then(data => {
+                $('#dropdown').empty();
+                data.neighbourhood_state.forEach(neighbourhood_state => {
+                    var newOption = new Option(neighbourhood_state, neighbourhood_state, false, false);
+                    $('#dropdown').append(newOption);
+                });
+                $('#dropdown').trigger('change');
+            })
+            .catch(error => {
+                console.error('Error fetching options:', error);
+                alert('Failed to fetch options.');
+            });
     </script>
 </body>
 {% endblock %}

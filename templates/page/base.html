@@ -1,62 +1,201 @@
 {% load static %}
 <!doctype html>
-<html lang='en' xmlns='http://www.w3.org/1999/html'>
-    <head>
-        <meta charset='utf-8'>
-        <meta name='viewport' content='width=device-width'>
-        <title>Redlow | {% block page-title %}{% endblock %}</title>
-        <script src='{% static 'js/jquery-3.7.1.min.js' %}'></script>
-        <script src='{% static 'js/script.js' %}'></script>
-        <link rel='stylesheet' type='text/css' href='{% static 'css/responsive.css' %}'>
-    </head>
-    <body>
-    <div id='header'>
-        <div id='title-box'>
-            <img src='{% static 'img/RedllowLogo.png' %}' alt='Logo'> <!-- https://www.vecteezy.com/vector-art/24443727-rich-source-of-dietary-fiber-high-protein-food-emblem-badge-seal-stamp-rubber-sticker-logo-label-packaging-design-patch-vector-illustration -->
-            <h1>Redlow</h1>
-            <h2>The New Way To Search For Housing!</h2>
-        </div><!-- title-box -->
-        {% if request.session.username %}
-            <div id='logged-in'>
-                <img src='{% static 'img/personIcon.png' %}' alt='PersonIcon'>
-                <p>Logged in as: {% if request.session.role == 'admin' %} Admin {% endif %} <a href="{% url "users:profile" request.session.username %}"><strong>{{ request.session.username }}</strong></a></p>
-                    <strong>{{ request.session.username }}</strong></p>
-                <a href="{% url 'users:logout' %}">Log Out</a>
-            </div><!-- log in-->
-        {% else %}
-            <form id="login-box" action="{% url 'users:login' %}" method="POST">
-                {% csrf_token %}
-                <input type="text" name="username" placeholder="username">
-                <input type="password" name="pw" placeholder="password">
-                <input type="submit" name="submit" value="Log In"> or <a href="{% url 'users:register' %}">Register</a>
-            </form>
-        {% endif %}
+<html lang='en'>
+<head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Redlow | {% block page-title %}{% endblock %}</title>
+    <script src='{% static 'js/jquery-3.7.1.min.js' %}'></script>
+    <script src='{% static 'js/script.js' %}'></script>
+    <link rel='stylesheet' type='text/css' href='{% static 'css/responsive.css' %}'>
+    <style>
+        /* Reset margins and paddings */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-        <nav id='navbar'>
-            <a href='{% url 'page:homeview' %}' class={% block homeSelected %}{% endblock %}>Home</a>
-            <a href="{% url 'page:productview' %}" class={% block productSelected %}{% endblock %}>Zip Code</a>
-            <a href="{% url 'page:neighbourhoodview' %}" class={% block neighborhoodSelected %}{% endblock %}>Neighborhood</a>
-            <a href="{% url 'page:reviewview' %}" class={% block reviewSelected %}{% endblock %}>Review</a>
-            <a href="{% url 'page:aboutview' %}" class={% block aboutSelected %}{% endblock %}>About</a>
-        </nav><!-- nav bar -->
-    </div><!-- header -->
-    <div id='content'>
-        {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-       {% block content %}{% endblock %}
-    </div><!-- content -->
-    <div id='footer'>
-        <div id = 'copyright'><p>Copyright © 2025 Redlow</p></div>
-        <div id = 'footer-nav'>
-            <p><a href='{% url 'page:privacyview' %}'>Privacy Policy</a> | <a href='{% url 'page:faqview' %}'>FAQ</a> | <a href='{% url 'page:contactview' %}'>Contact</a></p>
+        /* Full height layout */
+        body, html {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Header Styling */
+        #header {
+            background-color: #1E2A3A;
+            color: white;
+            padding: 5px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+
+        #header #title-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #header h1, #header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        #header img {
+            height: 40px;
+        }
+
+        /* Navbar and Login Styling */
+        #navbar {
+            display: flex;
+            gap: 20px;
+            font-size: 16px;
+            background-color: #9E2A2F;
+            padding: 10px 20px;
+            justify-content: center;
+        }
+
+        #navbar a {
+            color: white;
+            text-decoration: none;
+        }
+
+        #navbar a:hover {
+            text-decoration: underline;
+        }
+
+        /* Login Form */
+        #login-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #login-box input {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        #login-box input[type="submit"] {
+            background-color: #3f9bfb;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Footer Styling */
+        #footer {
+            background-color: #2E3B46;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        #footer a {
+            color: white;
+            text-decoration: none;
+        }
+
+        #footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Content Styling */
+        #content {
+            padding: 20px;
+            flex-grow: 1;
+            overflow: auto;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            #navbar {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+            #header {
+                height: auto;
+                flex-direction: column;
+                align-items: center;
+            }
+            #login-box {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        #logged-in {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Make content area use all vertical space */
+        main {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div id="title-box">
+            <img src="{% static 'img/RedllowLogo.png' %}" alt="Logo">
         </div>
-    </div><!-- footer -->
-    </body>
+        {% if request.session.username %}
+        <div id="login-box">
+            <p>Logged in as: <strong>{{ request.session.username }}</strong></p>
+            <a href="{% url 'users:profile' request.session.username %}">Profile</a> |
+            <a href="{% url 'users:logout' %}">Log Out</a>
+        </div>
+        {% else %}
+        <form id="login-box" action="{% url 'users:login' %}" method="POST">
+            {% csrf_token %}
+            <input type="text" name="username" placeholder="username" required>
+            <input type="password" name="pw" placeholder="password" required>
+            <input type="submit" name="submit" value="Log In">
+            or <a href="{% url 'users:register' %}">Register</a>
+        </form>
+        {% endif %}
+    </div>
+
+    <nav id="navbar">
+        <a href="{% url 'page:homeview' %}" class="{% block homeSelected %}{% endblock %}">Home</a>
+        <a href="{% url 'page:productview' %}" class="{% block productSelected %}{% endblock %}">Zip Code</a>
+        <a href="{% url 'page:neighbourhoodview' %}" class="{% block neighborhoodSelected %}{% endblock %}">Neighborhood</a>
+        <a href="{% url 'page:reviewview' %}" class="{% block reviewSelected %}{% endblock %}">Review</a>
+        <a href="{% url 'page:aboutview' %}" class="{% block aboutSelected %}{% endblock %}">About</a>
+    </nav>
+
+    <div id="content">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </div>
+
+    <div id="footer">
+        <div id="copyright"><p>Copyright © 2025 Redlow</p></div>
+        <div id="footer-nav">
+            <p><a href="{% url 'page:privacyview' %}">Privacy Policy</a> |
+                <a href="{% url 'page:faqview' %}">FAQ</a> |
+                <a href="{% url 'page:contactview' %}">Contact</a></p>
+        </div>
+    </div>
+</body>
 </html>
-
-

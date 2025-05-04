@@ -5,66 +5,211 @@
 {% block reviewSelected %}selected{% endblock %}
 
 {% block content %}
-<div id="comments">
-    <h2 class='section-title'>Review</h2>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Write a Review</title>
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Custom CSS for Stylish Form -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
 
+        /* Center form on the page and restrict its width */
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 80%;
+            padding: 20px;
+            margin: 0 auto; /* Centers the form horizontally */
+        }
 
-    {% if request.session.username %}
-    <form id="register-users" method="POST">
+        .form-container h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .form-row div {
+            flex: 1;
+        }
+
+        .form-row input, .form-row select, .form-row textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-row textarea {
+            height: 100px;
+        }
+
+        .button-container {
+            text-align: center;
+        }
+
+        .button-container button {
+            padding: 10px 20px;
+            font-size: 14px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .button-container button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Styling for reviews - old comment box style */
+        .review-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd; /* Old style border */
+            position: relative; /* Allow absolute positioning inside the box */
+            padding-left: 50px; /* Space for the profile picture */
+        }
+
+        .review-item img {
+            position: absolute;
+            left: 15px; /* Move the profile picture inside */
+            top: 15px; /* Align at the top of the box */
+            width: 50px;  /* Make the profile picture slightly larger */
+            height: 50px; /* Ensure the profile picture is circular */
+            border-radius: 50%;  /* Keep it circular */
+            object-fit: cover; /* Ensure the image fits inside the circle */
+        }
+
+        .review-item .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 6px 12px; /* Adjust padding for the button */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: absolute; /* Position it under the profile picture */
+            bottom: 15px; /* Align it at the bottom of the box */
+            left: 15px; /* Keep it aligned to the left */
+        }
+
+        .review-item .delete-btn:hover {
+            background-color: #c82333; /* Change color on hover */
+        }
+
+        .review-item p {
+            margin: 5px 0;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+
+<div class="form-container">
+    <h2>Write Your Review</h2>
+    <form method="POST">
         {% csrf_token %}
-        <textarea name="text" rows="3" placeholder="Write your review here..." required></textarea><br>
 
-        <label>Region:
-            <select name="region_id" required>
-              <option value="" disabled selected>Select a region</option>
-              {% for region in regions %}
-                <option value="{{ region.region_id }}">{{ region.region_name }} ({{ region.region_type }})</option>
-              {% endfor %}
-            </select>
-        </label><br>
+        <!-- Grouped Inputs in Rows -->
+        <div class="form-row">
+            <div>
+                <label for="region">Region</label>
+                <select id="region" name="region">
+                    <option value="">Select a region</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
 
-        <label>Rating:
-            <select name="rating">
-                {% for i in "12345" %}
-                <option value="{{ i }}">{{ i }}</option>
-                {% endfor %}
-            </select>
-        </label><br>
+            <div>
+                <label for="zipcode">ZIP Code</label>
+                <input type="text" id="zipcode" name="zipcode" placeholder="Enter ZIP Code">
+            </div>
 
-        <label>Bedrooms: <input type="number" name="num_bedrooms" min="0" required></label><br>
-        <label>Bathrooms: <input type="number" name="num_bathrooms" min="0" required></label><br>
-        <label>Price Paid ($): <input type="number" name="price_paid" min="0" step="0.01" required></label><br>
-        <label>Ownership:
-            <select name="ownership_status">
-                <option value="rent">Rent</option>
-                <option value="own">Own</option>
-            </select>
-        </label><br>
-        <label>ZIP Code: <input type="text" name="zip_code" maxlength="10"></label><br>
+            <div>
+                <label for="rating">Rating</label>
+                <select id="rating" name="rating">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+        </div>
 
-        <button type="submit" name="submit" value="Add">Add Review</button>
+        <div class="form-row">
+            <div>
+                <label for="bedrooms">Bedrooms</label>
+                <input type="number" id="bedrooms" name="bedrooms" placeholder="Enter number of bedrooms">
+            </div>
+            <div>
+                <label for="bathrooms">Bathrooms</label>
+                <input type="number" id="bathrooms" name="bathrooms" placeholder="Enter number of bathrooms">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div>
+                <label for="price">Price Paid ($)</label>
+                <input type="number" id="price" name="price" placeholder="Enter price paid">
+            </div>
+            <div>
+                <label for="ownership">Ownership</label>
+                <select id="ownership" name="ownership">
+                    <option value="Rent">Rent</option>
+                    <option value="Own">Own</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div>
+                <label for="review">Review</label>
+                <textarea id="review" name="review" placeholder="Write your review here..."></textarea>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="button-container">
+            <button type="submit">Add Review</button>
+        </div>
     </form>
-    {% endif %}
-
-    <div id='comment-box'>
-        <ul id='comments-list'>
+</div>
+    <div id="comment-box">
+        <ul id="comments-list">
             {% for review in reviews %}
-            <li>
-                <img src='{% static 'img/personIcon.png' %}' alt='PersonIcon'>
+            <li class="review-item">
+                <img src='{% static 'img/personIcon.png' %}' alt='PersonIcon' class="profile-icon">
                 <p><strong><a href="{% url 'users:profile' review.user.username %}">{{ review.user.username }}</a></strong> - {{ review.created_at | naturalday }}</p>
                 <p><strong>Region:</strong> {{ review.region.region_name }} ({{ review.region.region_type }})</p>
                 <p><strong>Rating:</strong> {{ review.rating }}/5</p>
-                <p><strong>Review:</strong> {{ review.content }}</p>
                 <p><strong>Bedrooms:</strong> {{ review.num_bedrooms }} | <strong>Bathrooms:</strong> {{ review.num_bathrooms }}</p>
                 <p><strong>Price Paid:</strong> ${{ review.price_paid }}</p>
                 <p><strong>Status:</strong> {{ review.get_ownership_status_display }}</p>
                 <p><strong>ZIP Code:</strong> {{ review.zip_code }}</p>
+                <br>
+                <p><strong>Review:</strong> {{ review.content }}</p>
 
                 {% if review.user.username == request.session.username or request.session.role == 'admin' %}
-                <form method="POST">
+                <form method="POST" class="delete-form">
                     {% csrf_token %}
                     <input type="hidden" name="review_id" value="{{ review.id }}">
-                    <input type="submit" name="submit" value="Delete" id="edit-comment">
+                    <button type="submit" name="submit" class="delete-btn">Delete</button>
                 </form>
                 {% endif %}
             </li>
@@ -73,5 +218,37 @@
             {% endfor %}
         </ul>
     </div>
-</div>
+
+
+    <script>
+   $(document).ready(function() {
+        const api_endpoint_1 = location.protocol + '//' + location.host + '/region_api/list_neighbourhoods';
+
+        fetch(api_endpoint_1)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // Log the data to check its structure
+                // Check if the correct data is available (replace 'neighbourhood_state' with the correct key if needed)
+                if (data && data.neighbourhood_state) {
+                    $('#region').empty(); // Clear any existing options
+                    data.neighbourhood_state.forEach(neighbourhood => {
+                        var newOption = new Option(neighbourhood, neighbourhood, false, false);
+                        $('#region').append(newOption);
+                    });
+                    $('#region').trigger('change'); // Update the Select2 dropdown
+                } else {
+                    console.error('Error: Expected "neighbourhood_state" in data', data);
+                    alert('Failed to load regions.');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching regions:', error);
+                alert('Failed to fetch regions.');
+            });
+    });
+    </script>
+
 {% endblock %}
+
+
+
