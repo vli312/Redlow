@@ -13,10 +13,13 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <!-- Custom CSS for Stylish Form -->
     <style>
-        body {
+
+        html, body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            overflow-y: auto;
+            height: auto;
         }
 
         /* Center form on the page and restrict its width */
@@ -24,8 +27,8 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            width: 80%;
-            padding: 20px;
+            width: 60%;
+            padding: 10px;
             margin: 0 auto; /* Centers the form horizontally */
         }
 
@@ -36,7 +39,7 @@
 
         .form-row {
             display: flex;
-            gap: 20px;
+            gap: 10px;
             width: 100%;
         }
 
@@ -61,8 +64,8 @@
         }
 
         .button-container button {
-            padding: 10px 20px;
-            font-size: 14px;
+            padding: 8px 16px;
+            font-size: 13px;
             background-color: #007bff;
             color: white;
             border: none;
@@ -73,6 +76,17 @@
 
         .button-container button:hover {
             background-color: #0056b3;
+        }
+
+        .scroll-container {
+            max-height: 500px;
+            overflow-y: auto;
+            margin: 20px auto;
+            width: 80%;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #ffffff;
+            border-radius: 5px;
         }
 
         /* Styling for reviews - old comment box style */
@@ -117,6 +131,8 @@
             margin: 5px 0;
             padding: 5px 10px;
         }
+
+
     </style>
 </head>
     {% if request.session.username %}
@@ -129,15 +145,17 @@
         <div class="form-row">
             <div>
                 <label for="region">Region</label>
-                <select id="region" name="region">
+                <select id="region" name="region_id">
                     <option value="">Select a region</option>
-                    <!-- Options will be populated dynamically -->
+                    {% for region in regions %}
+                        <option value="{{ region.region_id }}">{{ region.region_name }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
             <div>
                 <label for="zipcode">ZIP Code</label>
-                <input type="text" id="zipcode" name="zipcode" placeholder="Enter ZIP Code">
+                <input type="text" id="zipcode" name="zip_code" placeholder="Enter ZIP Code">
             </div>
 
             <div>
@@ -155,22 +173,22 @@
         <div class="form-row">
             <div>
                 <label for="bedrooms">Bedrooms</label>
-                <input type="number" id="bedrooms" name="bedrooms" placeholder="Enter number of bedrooms">
+                <input type="number" id="bedrooms" name="num_bedrooms" placeholder="Enter number of bedrooms">
             </div>
             <div>
                 <label for="bathrooms">Bathrooms</label>
-                <input type="number" id="bathrooms" name="bathrooms" placeholder="Enter number of bathrooms">
+                <input type="number" id="bathrooms" name="num_bathrooms" placeholder="Enter number of bathrooms">
             </div>
         </div>
 
         <div class="form-row">
             <div>
                 <label for="price">Price Paid ($)</label>
-                <input type="number" id="price" name="price" placeholder="Enter price paid">
+                <input type="number" id="price" name="price_paid" placeholder="Enter price paid">
             </div>
             <div>
                 <label for="ownership">Ownership</label>
-                <select id="ownership" name="ownership">
+                <select id="ownership" name="ownership_status">
                     <option value="Rent">Rent</option>
                     <option value="Own">Own</option>
                 </select>
@@ -180,75 +198,47 @@
         <div class="form-row">
             <div>
                 <label for="review">Review</label>
-                <textarea id="review" name="review" placeholder="Write your review here..."></textarea>
+                <textarea id="review" name="content" placeholder="Write your review here..."></textarea>
             </div>
         </div>
 
         <!-- Submit Button -->
         <div class="button-container">
-            <button type="submit">Add Review</button>
+            <button type="submit" name="submit" value="Add">Add Review</button>
         </div>
     </form>
 </div>
     {% endif %}
-    <div id="comment-box">
-        <ul id="comments-list">
-            {% for review in reviews %}
-            <li class="review-item">
-                <img src='{% static 'img/personIcon.png' %}' alt='PersonIcon' class="profile-icon">
-                <p><strong><a href="{% url 'users:profile' review.user.username %}">{{ review.user.username }}</a></strong> - {{ review.created_at | naturalday }}</p>
-                <p><strong>Region:</strong> {{ review.region.region_name }} ({{ review.region.region_type }})</p>
-                <p><strong>Rating:</strong> {{ review.rating }}/5</p>
-                <p><strong>Bedrooms:</strong> {{ review.num_bedrooms }} | <strong>Bathrooms:</strong> {{ review.num_bathrooms }}</p>
-                <p><strong>Price Paid:</strong> ${{ review.price_paid }}</p>
-                <p><strong>Status:</strong> {{ review.get_ownership_status_display }}</p>
-                <p><strong>ZIP Code:</strong> {{ review.zip_code }}</p>
-                <br>
-                <p><strong>Review:</strong> {{ review.content }}</p>
+    <div class="scroll-container">
+        <div id="comment-box">
+            <ul id="comments-list">
+                {% for review in reviews %}
+                <li class="review-item">
+                    <img src='{% static 'img/personIcon.png' %}' alt='PersonIcon' class="profile-icon">
+                    <p><strong><a href="{% url 'users:profile' review.user.username %}">{{ review.user.username }}</a></strong> - {{ review.created_at | naturalday }}</p>
+                    <p><strong>Region:</strong> {{ review.region.region_name }} ({{ review.region.region_type }})</p>
+                    <p><strong>Rating:</strong> {{ review.rating }}/5</p>
+                    <p><strong>Bedrooms:</strong> {{ review.num_bedrooms }} | <strong>Bathrooms:</strong> {{ review.num_bathrooms }}</p>
+                    <p><strong>Price Paid:</strong> ${{ review.price_paid }}</p>
+                    <p><strong>Status:</strong> {{ review.get_ownership_status_display }}</p>
+                    <p><strong>ZIP Code:</strong> {{ review.zip_code }}</p>
+                    <br>
+                    <p><strong>Review:</strong> {{ review.content }}</p>
 
-                {% if review.user.username == request.session.username or request.session.role == 'admin' %}
-                <form method="POST" class="delete-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="review_id" value="{{ review.id }}">
-                    <button type="submit" name="submit" class="delete-btn">Delete</button>
-                </form>
-                {% endif %}
-            </li>
-            {% empty %}
-            <li>No reviews yet</li>
-            {% endfor %}
-        </ul>
+                    {% if review.user.username == request.session.username or request.session.role == 'admin' %}
+                    <form method="POST" class="delete-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="review_id" value="{{ review.id }}">
+                        <button type="submit" name="submit" value="Delete" class="delete-btn">Delete</button>
+                    </form>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li>No reviews yet</li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
-
-
-    <script>
-   $(document).ready(function() {
-        const api_endpoint_1 = location.protocol + '//' + location.host + '/region_api/list_neighbourhoods';
-
-        fetch(api_endpoint_1)
-            .then(response => response.json())
-            .then(data => {
-                console.log(data); // Log the data to check its structure
-                // Check if the correct data is available (replace 'neighbourhood_state' with the correct key if needed)
-                if (data && data.neighbourhood_state) {
-                    $('#region').empty(); // Clear any existing options
-                    data.neighbourhood_state.forEach(neighbourhood => {
-                        var newOption = new Option(neighbourhood, neighbourhood, false, false);
-                        $('#region').append(newOption);
-                    });
-                    $('#region').trigger('change'); // Update the Select2 dropdown
-                } else {
-                    console.error('Error: Expected "neighbourhood_state" in data', data);
-                    alert('Failed to load regions.');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching regions:', error);
-                alert('Failed to fetch regions.');
-            });
-    });
-    </script>
-
 {% endblock %}
 
 

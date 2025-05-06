@@ -23,9 +23,10 @@ def reviewview(request):
         if request.POST.get('submit') == 'Add':
             try:
                 user = User.objects.get(username=request.session.get('username'))
+
                 region_id = int(request.POST.get('region_id'))
                 region = Region.objects.get(region_id=region_id)
-                content = request.POST.get('text', '').strip()
+                content = request.POST.get('content', '').strip()
                 rating = int(request.POST.get('rating', 1))
                 num_bedrooms = int(request.POST.get('num_bedrooms', 0))
                 num_bathrooms = int(request.POST.get('num_bathrooms', 0))
@@ -47,9 +48,9 @@ def reviewview(request):
 
                 messages.success(request, "Review added successfully!")
                 return redirect('page:reviewview')
+
             except Exception as e:
                 messages.error(request, f"Failed to add review: {e}")
-
         elif request.POST.get('submit') == 'Delete':
             review_id = request.POST.get('review_id')
             review = get_object_or_404(Review, pk=review_id)
