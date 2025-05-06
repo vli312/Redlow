@@ -119,7 +119,7 @@
         }
     </style>
 </head>
-
+    {% if request.session.username %}
 <div class="form-container">
     <h2>Write Your Review</h2>
     <form method="POST">
@@ -190,6 +190,7 @@
         </div>
     </form>
 </div>
+    {% endif %}
     <div id="comment-box">
         <ul id="comments-list">
             {% for review in reviews %}
