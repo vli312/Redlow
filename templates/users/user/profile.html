@@ -14,8 +14,6 @@
         <dd class="item">{{ user.email }}</dd>
         <dt class="itemDes"><strong>Role</strong></dt>
         <dd class="item">{{ user.detail.role }}</dd>
-        <dt class="itemDes"><strong>Favorite Protein Source</strong></dt>
-        <dd class="item">{{ user.detail.favproteinsource }}</dd>
     </dl>
     {% if request.session.username == user.username or request.session.role == 'admin'%}
         <a href="{% url 'users:editprofile' user.username %}" class="editprofile">Edit</a>
