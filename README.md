@@ -1,4 +1,4 @@
-#Redlow Projet CS5614
+# Redlow Project CS5614
 
 A web-based product that assists homebuyers by displaying the average and median housing prices by zip code for the DMV area. Satellite imagery is used to map neighborhoods, and real estate data from Zillow is aggregated to calculate and visualize median and average housing prices in 2024.
 
